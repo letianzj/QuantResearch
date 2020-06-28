@@ -1,0 +1,1 @@
+data downloaded for research and backtest
