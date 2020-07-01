@@ -18,7 +18,8 @@ Notebooks and Backtests
 |13 |  [Principal Componenet Analysis](./notebooks/principal_component_analysis.ipynb)    |[link](https://letianzj.github.io/principal-component-analysis.html)|
 |14 |  [ARIMA and GARCH Models](./notebooks/arima_garch.ipynb)    |[link](https://letianzj.github.io/vector-autoregression.html)|
 |15 |  [Fama-French three-factor](./notebooks/fama_french.ipynb)    |&nbsp;|
-|16 |  [Vector AutoRegression](./notebooks/vector_autoregression.ipynb.ipynb)    |&nbsp;|
+|16 |  [Vector AutoRegression](./notebooks/vector_autoregression.ipynb)    |&nbsp;|
+|17 |  [Gaussian Mixture and Markov Switching](./notebooks/gaussian_mixture_markov_switching.ipynb)    |[link](https://letianzj.github.io/gaussian-mixture-markov-regime-switching.html)|
 
 ```python
 
