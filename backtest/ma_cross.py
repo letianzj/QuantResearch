@@ -96,7 +96,7 @@ class MACross(bt.Strategy):
                          (self.dataclose[0],
                           self.sma[0],
                           self.getsizing(isbuy=False)))
-        # close position; and open the other side
+        # close position;
         else:
             if self.dataclose[0] > self.sma[0] and self.position.size < 0:
                 self.order = self.buy()
@@ -123,11 +123,11 @@ class MACross(bt.Strategy):
 if __name__ == '__main__':
     param_opt = False
     perf_eval = True
-    benchmark = 'AAPL'
+    benchmark = 'SPX'
 
     cerebro = bt.Cerebro()
 
-    datapath = os.path.join('../data/', 'AAPL.csv')
+    datapath = os.path.join('../data/', 'SPX.csv')
 
     # Create a Data Feed
     data = bt.feeds.YahooFinanceCSVData(
@@ -159,7 +159,7 @@ if __name__ == '__main__':
         cerebro.optstrategy(MACross, n=range(10, 31))
         perf_eval = False
     else:
-        cerebro.addstrategy(MACross, n=30, printlog=True)
+        cerebro.addstrategy(MACross, n=20, printlog=True)
 
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')

@@ -3,11 +3,58 @@
 
 import os
 import argparse
+import signal
+import time
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import pandas_datareader.data as web
 # import yfinance as yf
+from yahoo_fin import stock_info
+from dateutil.parser import parse
+
+class TimeoutError(Exception):
+    def __init__(self, value = "Timed Out"):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+# https://stackoverflow.com/questions/35490555/python-timeout-decorator
+def timeout(seconds_before_timeout):
+    def decorate(f):
+        def handler(signum, frame):
+            raise TimeoutError()
+        def new_f(*args, **kwargs):
+            old = signal.signal(signal.SIGALRM, handler)
+            old_time_left = signal.alarm(seconds_before_timeout)
+            if 0 < old_time_left < seconds_before_timeout: # never lengthen existing timer
+                signal.alarm(old_time_left)
+            start_time = time.time()
+            try:
+                result = f(*args, **kwargs)
+            finally:
+                if old_time_left > 0: # deduct f's run time from the saved timer
+                    old_time_left -= time.time() - start_time
+                signal.signal(signal.SIGALRM, old)
+                signal.alarm(old_time_left)
+            return result
+        new_f.func_name = f.func_name
+        return new_f
+    return decorate
+
+def is_date(string, fuzzy=False):
+    """
+    Return whether the string can be interpreted as a date.
+
+    :param string: str, string to check for date
+    :param fuzzy: bool, ignore unknown tokens in string if True
+    """
+    try:
+        parse(string, fuzzy=fuzzy)
+        return True
+
+    except ValueError:
+        return False
 
 def save(df, fn):
     df = df[['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]
@@ -87,6 +134,54 @@ def run(args):
                 print(f'{sym} failed. {str(e)}')
         print(f'{args.sym} downloaded')
 
+    if args.fundamental:
+        import pickle
+        import time
+
+        call_dict = {'balance_sheet': stock_info.get_balance_sheet,
+                     'cash_flow': stock_info.get_cash_flow,
+                     'income_statement': stock_info.get_income_statement,
+                     'stats_valuation': stock_info.get_stats_valuation,
+                     }
+
+        print('Downloading fundamentals .............')
+        outfile = os.path.join(hist_path, 'all_stocks.pkl')
+        dict_all_stocks = dict()
+        if os.path.isfile(outfile):
+            with open(outfile, 'rb') as f:
+                dict_all_stocks = pickle.load(f)
+        df_stocks = pd.read_csv(os.path.join(hist_path, 'all_stocks.csv'), header=None)
+
+        field = args.fundamental
+        func_call = call_dict[field]
+        for idx, r in df_stocks.iterrows():
+            s = r.iloc[0]
+            if s not in dict_all_stocks.keys():
+                dict_all_stocks[s] = dict()
+
+            if field in dict_all_stocks[s].keys():
+                df_old = dict_all_stocks[s][field]
+            else:
+                dict_all_stocks[s][field] = dict()
+                df_old = pd.DataFrame()
+            try:
+                df_new = func_call(s)
+                df_new.set_index(df_new.columns[0], inplace=True)
+                df_new.index.name = 'Breakdown'
+                cols = [c for c in df_new.columns if is_date(c)]
+                df_new = df_new[cols]
+                # combine_first is convenient
+                df_new = df_new.combine_first(df_old)
+                dict_all_stocks[s][field] = df_new
+                print(f'{s} {field} is downloaded')
+                time.sleep(1)
+            except:
+                print(f'{s} {field} failed')
+
+        with open(outfile, 'wb') as f:
+            pickle.dump(dict_all_stocks, f, pickle.HIGHEST_PROTOCOL)
+        print(f'Fundamentals {field} downloaded')
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Historical Downloader')
@@ -95,7 +190,8 @@ if __name__ == "__main__":
     parser.add_argument('--sector',  action='store_true')
     parser.add_argument('--country',  action='store_true')
     parser.add_argument('--taa', action='store_true')
-    parser.add_argument('--sym', help='symbol')
+    parser.add_argument('--sym', help='AAPL+AMZN')
+    parser.add_argument('--fundamental', help='balance_sheet cash_flow income_statement stats_valuation')
 
     args = parser.parse_args()
     run(args)

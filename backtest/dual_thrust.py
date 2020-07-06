@@ -1,9 +1,15 @@
 '''
-Classical MovingAverageCrossStrategy, golden cross buy; dead cross sell
-Close position when opposite cross happens
-sharpe 0.4 vs spx 0.67
+The Dual Thrust trading algorithm is a famous strategy developed by Michael Chalek.
+It is a breakout system, commonly used in futures, forex and equity markets.
+The opening range breakout strategy is based on today’s opening price plus or minus a certain percentage of yesterday’s amplitude to determine the upper and lower rails.
+When the price breaks through the upper track, it will buy long, and when it breaks the lower track, it will sell short.
+https://www.quantconnect.com/tutorials/strategy-library/dual-thrust-trading-algorithm
+Similar to quantconnect, got negative Sharpe -0.377.
+It is an intraday strategy, probably needs to be flat eod, or stop loss.
+Holding position for a year is against the essence of this strategy.
 '''
 import os
+import numpy as np
 import pandas as pd
 from datetime import datetime
 import backtrader as bt
@@ -11,10 +17,11 @@ import backtrader as bt
 from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
-class MADoubleCross(bt.Strategy):
+class DualThrust(bt.Strategy):
     params = (
-        ('short_window', 20),
-        ('long_window', 20),
+        ('n', 4),
+        ('k1', 0.5),
+        ('k2', 0.5),
         ('printlog', False),        # comma is required
     )
 
@@ -24,9 +31,6 @@ class MADoubleCross(bt.Strategy):
         self.buycomm = None
         self.bar_executed = None
         self.val_start = None
-        self.dataclose = self.datas[0].close
-        self.short_ema = bt.indicators.ExponentialMovingAverage(self.dataclose, period = self.params.short_window)
-        self.long_ema = bt.indicators.ExponentialMovingAverage(self.dataclose, period = self.params.long_window)
 
     def log(self, txt, dt=None, doprint=False):
         ''' Logging function fot this strategy'''
@@ -83,46 +87,49 @@ class MADoubleCross(bt.Strategy):
         if self.order:
             return
 
-        # open position
-        if self.position.size == 0:
-            if self.short_ema[0] > self.long_ema[0]:
-                self.order = self.buy()
-                self.log('BUY ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=True)))
-            else:
-                self.order = self.sell()
-                self.log('SELL ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=False)))
-        # close position;
-        else:
-            if self.short_ema[0] > self.long_ema[0] and self.position.size < 0:
-                self.order = self.buy()
-                self.log('BUY ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=True)))
-            elif self.short_ema[0] < self.long_ema[0] and self.position.size > 0:
-                self.order = self.sell()
-                self.log('SELL ORDER SENT,Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=False)))
+        # need n day trading range
+        if len(self.datas[0]) < self.params.n:
+            return
+
+        high = self.datas[0].high.get(0, self.params.n)
+        low = self.datas[0].low.get(0, self.params.n)
+        close = self.datas[0].close.get(0, self.params.n)
+        current_open = self.datas[0].open[0]
+        current_price = self.datas[0].close[0]
+
+        HH, HC, LC, LL = max(high), max(close), min(close), min(low)
+        signal_range = max(HH - LC, HC - LL)
+        selltrig = current_open - self.params.k2 * signal_range
+        buytrig = current_open + self.params.k1 * signal_range
+
+        if current_price > buytrig:   # buy on upper break
+            if self.position.size > 0:
+                return
+            target = int(self.broker.get_value() / current_price * 0.95)
+            self.order = self.order_target_size(target=target)
+            self.log('BUY ORDER SENT, Pre-Price: %.2f, Price: %.2f, UB: %.2f, Target size: %.2f' %
+                     (close[-2],
+                      close[-1],
+                      buytrig,
+                      target))
+        elif current_price < selltrig:   # sell on down break
+            if self.position.size < 0:
+                return
+            target = -int(self.broker.get_value() / current_price * 0.95)
+            self.order = self.order_target_size(target=target)
+            self.log('SELL ORDER SENT, Pre-Price: %.2f, Price: %.2f, LB: %.2f, Target size: %.2f' %
+                     (close[-2],
+                      close[-1],
+                      selltrig,
+                      target))
 
     def stop(self):
         # calculate the actual returns
         print(self.analyzers)
         roi = (self.broker.get_value() / self.val_start) - 1.0
         self.log('ROI:        {:.2f}%'.format(100.0 * roi))
-        self.log('(MA Period (%2d, %2d)) Ending Value %.2f' %
-                 (self.params.short_window, self.params.long_window, self.broker.getvalue()), doprint=True)
+        self.log('(Dual thrust params (%2d, %.2f, %.2f)) Ending Value %.2f' %
+                 (self.params.n, self.params.k1, self.params.k2, self.broker.getvalue()), doprint=True)
 
 
 if __name__ == '__main__':
@@ -150,7 +157,7 @@ if __name__ == '__main__':
     # Add a FixedSize sizer according to the stake
     # cerebro.addsizer(bt.sizers.FixedSize, stake=10)
     # PercentSizer will flat position first; overwrite if not desired.
-    cerebro.addsizer(bt.sizers.PercentSizerInt, percents=95)
+    # cerebro.addsizer(bt.sizers.PercentSizerInt, percents=95)
 
     # Set the commission - 0.1% ... divide by 100 to remove the %
     cerebro.broker.setcommission(commission=0.001)
@@ -161,10 +168,10 @@ if __name__ == '__main__':
     # Add a strategy
     if param_opt:
         # Optimization
-        cerebro.optstrategy(MADoubleCross, short_window=[10, 20], long_window=[50, 100, 200])
+        cerebro.optstrategy(DualThrust, n=[10, 15, 20], k1=[0.4, 0.5, 0.6])
         perf_eval = False
     else:
-        cerebro.addstrategy(MADoubleCross, short_window=50, long_window=200, printlog=True)
+        cerebro.addstrategy(DualThrust, n=20, k1=0.5, k2=0.5, printlog=True)
 
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')

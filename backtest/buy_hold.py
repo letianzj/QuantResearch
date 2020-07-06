@@ -16,13 +16,6 @@ class BuyAndHold(bt.Strategy):
     def start(self):
         self.val_start = self.broker.get_cash()  # keep the starting cash
 
-    def nextstart(self):
-        # Buy all the available cash
-        # self.order_target_value(target=self.broker.get_cash())
-        #size = int(self.broker.get_cash() / self.data)
-        #self.order = self.buy(size=size)
-        self.buy()
-
     def notify_trade(self, trade):
         if not trade.isclosed:
             return
@@ -56,7 +49,11 @@ class BuyAndHold(bt.Strategy):
     def next(self):
         # Simply log the closing price of the series from the reference
         # self.log('Close, %.2f' % self.data.close[0])
-        pass
+        # Buy all the available cash
+        # self.order_target_value(target=self.broker.get_cash())
+        #size = int(self.broker.get_cash() / self.data)
+        #self.order = self.buy(size=size)
+        self.buy()
 
     def stop(self):
         # calculate the actual returns
@@ -92,6 +89,8 @@ if __name__ == '__main__':
 
     # Set the commission - 0.1% ... divide by 100 to remove the %
     cerebro.broker.setcommission(commission=0.001)
+    # cheat-on-close
+    cerebro.broker.set_coc(True)          # doesn't seems to be working
 
     # Print out the starting conditions
     print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())

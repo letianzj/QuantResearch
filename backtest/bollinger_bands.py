@@ -1,9 +1,11 @@
 '''
-Classical MovingAverageCrossStrategy, golden cross buy; dead cross sell
-Close position when opposite cross happens
-sharpe 0.4 vs spx 0.67
+classical Bollinger Bands. Buy when price back up from lower bands; sell when middle is hit
+Sell when price back down from upper bands; buy back when middle is hit
+sharpe 0.45 vs spx 0.67
+pretty good 2015
 '''
 import os
+import numpy as np
 import pandas as pd
 from datetime import datetime
 import backtrader as bt
@@ -11,10 +13,10 @@ import backtrader as bt
 from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
-class MADoubleCross(bt.Strategy):
+class BollingerBands(bt.Strategy):
     params = (
-        ('short_window', 20),
-        ('long_window', 20),
+        ('n', 20),
+        ('ndev', 2.0),
         ('printlog', False),        # comma is required
     )
 
@@ -25,8 +27,10 @@ class MADoubleCross(bt.Strategy):
         self.bar_executed = None
         self.val_start = None
         self.dataclose = self.datas[0].close
-        self.short_ema = bt.indicators.ExponentialMovingAverage(self.dataclose, period = self.params.short_window)
-        self.long_ema = bt.indicators.ExponentialMovingAverage(self.dataclose, period = self.params.long_window)
+        self.bollinger = bt.indicators.BollingerBands(self.dataclose, period=self.params.n, devfactor=self.params.ndev)
+        self.mb = self.bollinger.mid
+        self.ub = self.bollinger.top
+        self.lb = self.bollinger.bot
 
     def log(self, txt, dt=None, doprint=False):
         ''' Logging function fot this strategy'''
@@ -82,47 +86,58 @@ class MADoubleCross(bt.Strategy):
         # self.log('Close, %.2f' % self.data.close[0])
         if self.order:
             return
+        # need at least two bollinger records
+        if np.count_nonzero(~np.isnan(self.mb.get(0, len(self.mb)))) == 1:
+            return
 
-        # open position
-        if self.position.size == 0:
-            if self.short_ema[0] > self.long_ema[0]:
-                self.order = self.buy()
-                self.log('BUY ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=True)))
-            else:
-                self.order = self.sell()
-                self.log('SELL ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=False)))
-        # close position;
-        else:
-            if self.short_ema[0] > self.long_ema[0] and self.position.size < 0:
-                self.order = self.buy()
-                self.log('BUY ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=True)))
-            elif self.short_ema[0] < self.long_ema[0] and self.position.size > 0:
-                self.order = self.sell()
-                self.log('SELL ORDER SENT,Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=False)))
+        # open long position; price backs up from below lower band
+        if self.position.size <= 0 \
+                and self.dataclose[0] > self.lb[0] \
+                and self.dataclose[-1] < self.lb[-1]:
+            self.order = self.buy()
+            self.log('BUY ORDER SENT, Pre-Price: %.2f, Price: %.2f, Pre-LB: %.2f, LB: %.2f, Size: %.2f' %
+                     (self.dataclose[-1],
+                      self.dataclose[0],
+                      self.lb[-1],
+                      self.lb[0],
+                      self.getsizing(isbuy=True)))
+        # open short position; price backs down from above upper band
+        elif self.position.size >=0 \
+                and self.dataclose[0] < self.ub[0] \
+                and self.dataclose[-1] > self.ub[-1]:
+            self.order = self.sell()
+            self.log('SELL ORDER SENT, Pre-Price: %.2f, Price: %.2f, Pre-UB: %.2f, UB: %.2f, Size: %.2f' %
+                     (self.dataclose[-1],
+                      self.dataclose[0],
+                      self.ub[-1],
+                      self.ub[0],
+                      self.getsizing(isbuy=False)))
+        # close short position
+        elif self.dataclose[0] < self.mb[0] and self.position.size < 0:
+            self.order = self.buy()
+            self.log('BUY ORDER SENT, Pre-Price: %.2f, Price: %.2f, Pre-MB: %.2f, MB: %.2f, Size: %.2f' %
+                     (self.dataclose[-1],
+                      self.dataclose[0],
+                      self.mb[-1],
+                      self.mb[0],
+                      self.getsizing(isbuy=True)))
+        # close long position
+        elif self.dataclose[0] > self.mb[0] and self.position.size > 0:
+            self.order = self.sell()
+            self.log('SELL ORDER SENT, Pre-Price: %.2f, Price: %.2f, Pre-MB: %.2f, MB: %.2f, Size: %.2f' %
+                     (self.dataclose[-1],
+                      self.dataclose[0],
+                      self.mb[-1],
+                      self.mb[0],
+                      self.getsizing(isbuy=False)))
 
     def stop(self):
         # calculate the actual returns
         print(self.analyzers)
         roi = (self.broker.get_value() / self.val_start) - 1.0
         self.log('ROI:        {:.2f}%'.format(100.0 * roi))
-        self.log('(MA Period (%2d, %2d)) Ending Value %.2f' %
-                 (self.params.short_window, self.params.long_window, self.broker.getvalue()), doprint=True)
+        self.log('(Bollinger params (%2d, %2d)) Ending Value %.2f' %
+                 (self.params.n, self.params.ndev, self.broker.getvalue()), doprint=True)
 
 
 if __name__ == '__main__':
@@ -161,10 +176,10 @@ if __name__ == '__main__':
     # Add a strategy
     if param_opt:
         # Optimization
-        cerebro.optstrategy(MADoubleCross, short_window=[10, 20], long_window=[50, 100, 200])
+        cerebro.optstrategy(BollingerBands, n=[10, 20], ndev=[2.0, 2.5])
         perf_eval = False
     else:
-        cerebro.addstrategy(MADoubleCross, short_window=50, long_window=200, printlog=True)
+        cerebro.addstrategy(BollingerBands, n=20, ndev=2.0, printlog=True)
 
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')
