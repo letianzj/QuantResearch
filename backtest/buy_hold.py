@@ -65,7 +65,7 @@ if __name__ == '__main__':
     # Create a cerebro entitysetsizing
     cerebro = bt.Cerebro()
 
-    datapath = os.path.join('../data/', 'AAPL.csv')
+    datapath = os.path.join('../data/', 'SPX.csv')
 
     # Create a Data Feed
     data = bt.feeds.YahooFinanceCSVData(
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         # Do not pass values before this date
         fromdate=datetime(2010, 1, 1),
         # Do not pass values before this date
-        todate=datetime(2015, 12, 31),
+        todate=datetime(2019, 12, 31),
         # Do not pass values after this date
         reverse=False)
 

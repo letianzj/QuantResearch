@@ -162,7 +162,8 @@ def run(args):
             if field in dict_all_stocks[s].keys():
                 df_old = dict_all_stocks[s][field]
             else:
-                dict_all_stocks[s][field] = dict()
+                df_old = pd.DataFrame()
+            if not isinstance(df_old, pd.DataFrame):
                 df_old = pd.DataFrame()
             try:
                 df_new = func_call(s)
@@ -175,12 +176,84 @@ def run(args):
                 dict_all_stocks[s][field] = df_new
                 print(f'{s} {field} is downloaded')
                 time.sleep(1)
-            except:
-                print(f'{s} {field} failed')
+            except Exception as e:
+                print(f'{s} {field} failed; {str(e)}')
 
         with open(outfile, 'wb') as f:
             pickle.dump(dict_all_stocks, f, pickle.HIGHEST_PROTOCOL)
         print(f'Fundamentals {field} downloaded')
+
+    # This is adatped from https://towardsdatascience.com/sentiment-analysis-of-stocks-from-financial-news-using-python-82ebdcefb638
+    if args.sentiment:
+        print('sentiment downloading .............')
+        import pickle
+        import time
+        from urllib.request import urlopen, Request
+        from bs4 import BeautifulSoup
+
+        finwiz_url = 'https://finviz.com/quote.ashx?t='
+
+        outfile = os.path.join(hist_path, 'all_stocks.pkl')
+        dict_all_stocks = dict()
+        if os.path.isfile(outfile):
+            with open(outfile, 'rb') as f:
+                dict_all_stocks = pickle.load(f)
+        df_stocks = pd.read_csv(os.path.join(hist_path, 'intraday_stocks.csv'), header=None)
+        field = 'sentiment'
+        for idx, r in df_stocks.iterrows():
+            s = r.iloc[0]
+            if s not in dict_all_stocks.keys():
+                dict_all_stocks[s] = dict()
+
+            if field in dict_all_stocks[s].keys():
+                list_old = dict_all_stocks[s][field]
+            else:
+                list_old = []
+            if not isinstance(list_old, list):
+                list_old = []
+            try:
+                url = finwiz_url + s
+                req = Request(url=url, headers={'user-agent': 'my-app/0.0.1'})
+                response = urlopen(req)
+                # Read the contents of the file into 'html'
+                html = BeautifulSoup(response)
+                # Find 'news-table' in the Soup and load it into 'news_table'
+                news_table = html.find(id='news-table')
+                parsed_news = []
+
+                # Iterate through all tr tags in 'news_table'
+                insert_idx = 0
+                for x in news_table.findAll('tr'):
+                    # read the text from each tr tag into text
+                    # get text from a only
+                    text = x.a.get_text()
+                    # splite text in the td tag into a list
+                    date_scrape = x.td.text.split()
+                    # if the length of 'date_scrape' is 1, load 'time' as the only element
+                    if len(date_scrape) == 1:
+                        tm = date_scrape[0]
+                    # else load 'date' as the 1st element and 'time' as the second
+                    else:
+                        dt = date_scrape[0]
+                        tm = date_scrape[1]
+
+                    if [s, dt, tm, text] not in list_old:
+                        print(f'insert {s} {dt} {tm} at {insert_idx}')
+                        list_old.insert(insert_idx, [s, dt, tm, text])
+                        insert_idx += 1
+                    else:
+                        print(f'skip {s} {dt} {tm}')
+
+                dict_all_stocks[s][field] = list_old
+                print(f'{s} {field} is downloaded')
+                time.sleep(3)
+            except Exception as e:
+                print(f'{s} {field} failed; {str(e)}')
+
+        with open(outfile, 'wb') as f:
+            pickle.dump(dict_all_stocks, f, pickle.HIGHEST_PROTOCOL)
+
+        print('sentiment downloaded')
 
 
 if __name__ == "__main__":
@@ -192,6 +265,7 @@ if __name__ == "__main__":
     parser.add_argument('--taa', action='store_true')
     parser.add_argument('--sym', help='AAPL+AMZN')
     parser.add_argument('--fundamental', help='balance_sheet cash_flow income_statement stats_valuation')
+    parser.add_argument('--sentiment', action='store_true')
 
     args = parser.parse_args()
     run(args)

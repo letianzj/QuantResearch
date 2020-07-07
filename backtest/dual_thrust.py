@@ -1,20 +1,22 @@
 '''
 The Dual Thrust trading algorithm is a famous strategy developed by Michael Chalek.
 It is a breakout system, commonly used in futures, forex and equity markets.
-The opening range breakout strategy is based on today’s opening price plus or minus a certain percentage of yesterday’s amplitude to determine the upper and lower rails.
-When the price breaks through the upper track, it will buy long, and when it breaks the lower track, it will sell short.
+The limits are based on today’s opening price plus or minus a certain percentage of recent trading range.
+When the price breaks through the upper level, it will long, and when it breaks the lower level, it will short.
+1. recent trading range is relatively stable, using four price points;
+2. Percentage K1 and K2 can be asymmetric
 https://www.quantconnect.com/tutorials/strategy-library/dual-thrust-trading-algorithm
 Similar to quantconnect, got negative Sharpe -0.377.
-It is an intraday strategy, probably needs to be flat eod, or stop loss.
-Holding position for a year is against the essence of this strategy.
+It is an intraday breakout strategy, requires tickdata; holding position for a year is against the essence of this strategy.
+Improvements: 1. profit target and stop loss. 2. confirmation e.g. MA5min>MA10min
 '''
 import os
 import numpy as np
 import pandas as pd
 from datetime import datetime
 import backtrader as bt
-# set browser full width
 from IPython.core.display import display, HTML
+# set browser full width
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
 class DualThrust(bt.Strategy):
@@ -145,7 +147,7 @@ if __name__ == '__main__':
     data = bt.feeds.YahooFinanceCSVData(
         dataname=datapath,
         fromdate=datetime(2010, 1, 1),
-        todate=datetime(2018, 12, 31),
+        todate=datetime(2019, 12, 31),
         reverse=False)
 
     # Add the Data Feed to Cerebro

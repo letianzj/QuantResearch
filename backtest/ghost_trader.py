@@ -1,20 +1,30 @@
 '''
-Classical MovingAverageCrossStrategy, golden cross buy; dead cross sell
-Close position when opposite cross happens
-sharpe 0.4 vs spx 0.67
+It is observed that if last trade is profitable, next trade would more likely be a loss.
+Then why not create a ghost trader on the same strategy; and trade only when the ghost trader's a loss.
+Elements: two moving averages; rsi; donchain channel
+conditions: 1. long if short MA > long MA, rsi lower than overbought 70, new high
+            2. short if short MA < long MA, ris higher than oversold 30, new low
+exit:       1. exit long if lower than donchian lower band
+            2. exit short if higher than donchian upper band
+-42% vs benchmark 123%
 '''
 import os
+import numpy as np
 import pandas as pd
 from datetime import datetime
 import backtrader as bt
-# set browser full width
 from IPython.core.display import display, HTML
+# set browser full width
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
-class MADoubleCross(bt.Strategy):
+class GhostTrader(bt.Strategy):
     params = (
-        ('short_window', 20),
-        ('long_window', 20),
+        ('ma_short', 3),
+        ('ma_long', 21),
+        ('rsi_n', 9),
+        ('rsi_oversold', 30),
+        ('rsi_overbought', 70),
+        ('donchian_n', 21),
         ('printlog', False),        # comma is required
     )
 
@@ -24,9 +34,16 @@ class MADoubleCross(bt.Strategy):
         self.buycomm = None
         self.bar_executed = None
         self.val_start = None
+        self.long_ghost_virtual = False
+        self.long_ghost_virtual_price = 0.0
+        self.short_ghost_virtual = False
+        self.short_ghost_virtual_price = 0.0
         self.dataclose = self.datas[0].close
-        self.short_ema = bt.indicators.ExponentialMovingAverage(self.dataclose, period = self.params.short_window)
-        self.long_ema = bt.indicators.ExponentialMovingAverage(self.dataclose, period = self.params.long_window)
+        self.ema_short = bt.indicators.ExponentialMovingAverage(self.dataclose, period=self.params.ma_short)
+        self.ema_long = bt.indicators.ExponentialMovingAverage(self.dataclose, period=self.params.ma_long)
+        self.rsi = bt.indicators.RelativeStrengthIndex(self.dataclose, period=self.params.rsi_n)
+        # make sure donchian n is respected
+        self.dummy = bt.indicators.Momentum(self.dataclose, period=self.params.donchian_n-1)
 
     def log(self, txt, dt=None, doprint=False):
         ''' Logging function fot this strategy'''
@@ -83,46 +100,81 @@ class MADoubleCross(bt.Strategy):
         if self.order:
             return
 
-        # open position
-        if self.position.size == 0:
-            if self.short_ema[0] > self.long_ema[0]:
+        ema_short = self.ema_short[0]
+        ema_long = self.ema_long[0]
+        rsi = self.rsi[0]
+        long_stop = min(self.datas[0].low.get(0, self.params.donchian_n))
+        short_stop = max(self.datas[0].high.get(0, self.params.donchian_n))
+
+        # fast ma > slow ma, rsi < 70, new high
+        if self.position.size == 0 and ema_short > ema_long and rsi < self.params.rsi_overbought and \
+                self.datas[0].high[0] > self.datas[0].high[-1]:
+            # ghost long
+            if self.long_ghost_virtual == False:
+                self.log('Ghost long, Pre-Price: %.2f, Long Price: %.2f' %
+                         (self.dataclose[-1],
+                          self.dataclose[0]
+                          ))
+                self.long_ghost_virtual_price = self.datas[0].close[0]
+                self.long_ghost_virtual = True
+            # actual long; after ghost loss
+            if self.long_ghost_virtual == True and self.long_ghost_virtual_price > self.datas[0].close[0]:
+                self.long_ghost_virtual = False
                 self.order = self.buy()
-                self.log('BUY ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
+                self.log('BUY ORDER SENT, Pre-Price: %.2f, Price: %.2f, ghost price %.2f, Size: %.2f' %
+                         (self.dataclose[-1],
+                          self.dataclose[0],
+                          self.long_ghost_virtual_price,
                           self.getsizing(isbuy=True)))
-            else:
+        # close long if below Donchian lower band
+        elif self.position.size > 0 and self.datas[0].low[0] <= long_stop:
+            self.order = self.sell()
+            self.log('CLOSE LONG ORDER SENT, Pre-Price: %.2f, Price: %.2f, Low: %.2f, Stop: %.2f, Size: %.2f' %
+                     (self.dataclose[-1],
+                      self.dataclose[0],
+                      self.datas[0].low[0],
+                      long_stop,
+                      self.getsizing(isbuy=False)))
+
+        # fast ma < slow ma, rsi > 30, new low
+        if self.position.size == 0 and ema_short < ema_long and rsi > self.params.rsi_oversold and \
+                self.datas[0].low[0] < self.datas[0].low[-1]:
+            # ghost short
+            if self.short_ghost_virtual == False:
+                self.log('Ghost short, Pre-Price: %.2f, Long Price: %.2f' %
+                         (self.dataclose[-1],
+                          self.dataclose[0]
+                          ))
+                self.short_ghost_virtual_price = self.datas[0].close[0]
+                self.short_ghost_virtual = True
+            # actual short; after ghost loss
+            if self.short_ghost_virtual == True and self.short_ghost_virtual_price < self.datas[0].close[0]:
+                self.short_ghost_virtual = False
                 self.order = self.sell()
-                self.log('SELL ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
+                self.log('SELL ORDER SENT, Pre-Price: %.2f, Price: %.2f, ghost price %.2f, Size: %.2f' %
+                         (self.dataclose[-1],
+                          self.dataclose[0],
+                          self.short_ghost_virtual_price,
                           self.getsizing(isbuy=False)))
-        # close position;
-        else:
-            if self.short_ema[0] > self.long_ema[0] and self.position.size < 0:
-                self.order = self.buy()
-                self.log('BUY ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=True)))
-            elif self.short_ema[0] < self.long_ema[0] and self.position.size > 0:
-                self.order = self.sell()
-                self.log('SELL ORDER SENT,Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=False)))
+        # close short if above Donchian upper band
+        elif self.position.size < 0 and self.datas[0].high[0] >= short_stop:
+            self.order = self.buy()
+            self.log('CLOSE SHORT ORDER SENT, Pre-Price: %.2f, Price: %.2f, Low: %.2f, Stop: %.2f, Size: %.2f' %
+                     (self.dataclose[-1],
+                      self.dataclose[0],
+                      self.datas[0].high[0],
+                      short_stop,
+                      self.getsizing(isbuy=True)))
 
     def stop(self):
         # calculate the actual returns
         print(self.analyzers)
         roi = (self.broker.get_value() / self.val_start) - 1.0
         self.log('ROI:        {:.2f}%'.format(100.0 * roi))
-        self.log('(MA Period (%2d, %2d)) Ending Value %.2f' %
-                 (self.params.short_window, self.params.long_window, self.broker.getvalue()), doprint=True)
+        self.log('(Ghost Trader params (%2d, %2d, %2d, %2d, %2d, %2d)) Ending Value %.2f' %
+                 (self.params.ma_short, self.params.ma_long, self.params.rsi_n,
+                  self.params.rsi_oversold, self.params.rsi_overbought, self.params.donchian_n,
+                  self.broker.getvalue()), doprint=True)
 
 
 if __name__ == '__main__':
@@ -161,10 +213,10 @@ if __name__ == '__main__':
     # Add a strategy
     if param_opt:
         # Optimization
-        cerebro.optstrategy(MADoubleCross, short_window=[10, 20], long_window=[50, 100, 200])
+        cerebro.optstrategy(GhostTrader, donchian_n=[15, 20, 25])
         perf_eval = False
     else:
-        cerebro.addstrategy(MADoubleCross, short_window=50, long_window=200, printlog=True)
+        cerebro.addstrategy(GhostTrader, printlog=True)
 
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')

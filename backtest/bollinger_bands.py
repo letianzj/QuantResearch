@@ -153,7 +153,7 @@ if __name__ == '__main__':
     data = bt.feeds.YahooFinanceCSVData(
         dataname=datapath,
         fromdate=datetime(2010, 1, 1),
-        todate=datetime(2018, 12, 31),
+        todate=datetime(2019, 12, 31),
         reverse=False)
 
     # Add the Data Feed to Cerebro
