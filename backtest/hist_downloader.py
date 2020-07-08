@@ -77,6 +77,8 @@ def run(args):
         save(data, os.path.join(hist_path, f'NDX.csv'))
         data = web.DataReader(name='^RUT', data_source='yahoo', start=start_date, end=end_date)
         save(data, os.path.join(hist_path, f'RUT.csv'))
+        data = web.DataReader(name='^VIX', data_source='yahoo', start=start_date, end=end_date)
+        save(data, os.path.join(hist_path, f'VIX.csv'))
         print('Index downloaded')
 
     if args.dow:
