@@ -10,7 +10,8 @@ Test against daily bars between 2010 and 2019, using [Backtrader](https://www.ba
 |4 |  [Bollinger Bands](./bollinger_bands.py)    |0.46 |
 |5 |  [Dual Thrust](./dual_thrust.py)    | -0.55|
 |6 |  [Ghost Trader](./ghost_trader.py)    | -0.74|
-|6 |  [R-Breaker](./r-breaker.py)    | -0.22|
+|7 |  [R-Breaker](./r_breaker.py)    | -0.22|
+|8 |  [Mebane Baber TAA](./mebane_faber_taa.py)    | 0.40|
 
 ```python
 

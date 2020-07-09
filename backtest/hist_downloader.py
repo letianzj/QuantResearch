@@ -116,7 +116,7 @@ def run(args):
 
     if args.taa:
         print('Mebane Faber TAA downloading .............')
-        symbols = ['SPY', 'EFA', 'AGG', 'VNQ', 'GLD']   # sp, em, bond, real estate, gold
+        symbols = ['SPY', 'EFA', 'TIP', 'AGG', 'VNQ', 'GLD', 'GSG']   # sp, em, bond, real estate, gold
         for sym in symbols:
             try:
                 data = web.DataReader(name=sym, data_source='yahoo', start=start_date, end=end_date)
