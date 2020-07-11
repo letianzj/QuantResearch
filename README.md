@@ -22,6 +22,7 @@ Notebooks and Backtests
 |15 |  [Fama-French three-factor](./notebooks/fama_french.ipynb)    |&nbsp;|
 |16 |  [Vector AutoRegression](./notebooks/vector_autoregression.ipynb)    |&nbsp;|
 |17 |  [Gaussian Mixture and Markov Switching](./notebooks/gaussian_mixture_markov_switching.ipynb)    |[link](https://letianzj.github.io/gaussian-mixture-markov-regime-switching.html)|
+|18 |  [Portfolio Optimization Two](./backtest/portfolio_optimization)    |[link](https://letianzj.github.io/portfolio-management-two.html)|
 
 ```python
 
