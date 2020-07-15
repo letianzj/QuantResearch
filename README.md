@@ -11,7 +11,7 @@ Notebooks and Backtests
 |4 |  [Bayesian Linear Regression](./notebooks/bayesian_linear_regression.py)    |[link](https://letianzj.github.io/bayesian-linear-regression.html)|
 |5 |  [MCMC Linear Regression](./notebooks/mcmc_linear_regression.py)    |[link](https://letianzj.github.io/mcmc-linear-regression.html)|
 |6 |  [Kalman Filter Linear Regression](./notebooks/kalman_filter_linear_regression.py)    |[link](https://letianzj.github.io/kalman-filter-linear-regression.html)|
-|7 |  [Tensorflow Linear Regression](./notebooks/tensorflow_linear_regression.py)    |[link](https://letianzj.github.io/tensorflow-linear-regression.html)|
+|7 |  [Tensorflow Linear Regression](./notebooks/tensorflow_linear_regression.ipynb)    |[link](https://letianzj.github.io/tensorflow-linear-regression.html)|
 |8 |  [Mean Reversion](./notebooks/mean_reversion.py)    |[link](https://letianzj.github.io/mean-reversion.html)|
 |9 |  [Cointegration and Pairs Trading](./notebooks/cointegration_pairs_trading.py)    |[link](https://letianzj.github.io/cointegration-pairs-trading.html)|
 |10 |  [Kalman Filter and Pairs Trading](./notebooks/pairs_trading_kalman_filter.py)    |[link](https://letianzj.github.io/kalman-filter-pairs-trading.html)|
