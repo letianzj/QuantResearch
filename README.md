@@ -5,6 +5,7 @@ Notebooks and Backtests
 |Index |Notebooks                                                                         |Blogs        |
 |----:|:---------------------------------------------------------------------------------|-----------:|
 |0 |  [Backtest](./backtest)    |[data](./backtest/hist_downloader.py)|
+|0 |  [Machine Learning](./ml)    ||
 |1 |  [Portfolio Optimization One](./notebooks/portfolio_management_one.py)    |[link](https://letianzj.github.io/portfolio-management-one.html)|
 |2 |  [Value at Risk One](./notebooks/value_at_risk_one.py)    |[link](https://letianzj.github.io/value-at-risk-one.html)|
 |3 |  [Classical Linear Regression](./notebooks/classical_linear_regression.py)    |[link](https://letianzj.github.io/classical-linear-regression.html)|
@@ -18,7 +19,7 @@ Notebooks and Backtests
 |11 |  [Hidden Markov Chain](./notebooks/hidden_markov_chain.py)    |[link](https://letianzj.github.io/hidden-markov-chain.html)|
 |12 |  [RNN Stock Prediction](./notebooks/rnn_stock_prediction.py)    |[link](https://letianzj.github.io/rnn-stock-prediction.html)|
 |13 |  [Principal Componenet Analysis](./notebooks/principal_component_analysis.ipynb)    |[link](https://letianzj.github.io/principal-component-analysis.html)|
-|14 |  [ARIMA and GARCH Models](./notebooks/arima_garch.ipynb)    |[link](https://letianzj.github.io/vector-autoregression.html)|
+|14 |  [ARIMA and GARCH Models](./notebooks/arima_garch.ipynb)    |[link](https://letianzj.github.io/arima-garch-model.html)|
 |15 |  [Fama-French three-factor](./notebooks/fama_french.ipynb)    |&nbsp;|
 |16 |  [Vector AutoRegression](./notebooks/vector_autoregression.ipynb)    |&nbsp;|
 |17 |  [Gaussian Mixture and Markov Switching](./notebooks/gaussian_mixture_markov_switching.ipynb)    |[link](https://letianzj.github.io/gaussian-mixture-markov-regime-switching.html)|

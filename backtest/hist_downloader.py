@@ -198,7 +198,7 @@ def run(args):
                 # combine_first is convenient
                 df_new = df_new.combine_first(df_old)
                 dict_all_stocks[s][field] = df_new
-                print(f'{s} {field} is downloaded')
+                print(f'{s} {field} is downloaded, having {df_new.shape} records')
                 time.sleep(3)
             except Exception as e:
                 print(f'{s} {field} failed; {str(e)}')
