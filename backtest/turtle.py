@@ -1,11 +1,15 @@
 '''
-    Pruitt, George, and John R. Hill. Building Winning Trading Systems with Tradestation,+ Website. Vol. 542. John Wiley & Sons, 2012.
-    By George Pruitt in 1996
-    https://www.quantconnect.com/tutorials/strategy-library/the-dynamic-breakout-ii-strategy
-    1. Adaptive Donchian lookback parameter to current market: In volatile markets, using longer lookback to avoid frequent in-and-out. In trending markets; using shorter lookback to follow the trend.
-       if volatility changed x% from yesterday, change lookback x%. lookback falls between [20, 60]; Volatility can be ATR, stdev, or VIX
-    2. Another condition is adaptive bollinger bands. It needs to be confirmed before openning a position.
-    3. Adaptive moving average is used for stop loss.
+    Richard Dennis
+    https://www.quantopian.com/posts/turtle-trading-strategy#:~:text=Turtle%20trading%20is%20a%20well,of%20rules%20is%20more%20intricate.&text=This%20is%20a%20pretty%20fundamental%20strategy%20and%20it%20seems%20to%20work%20well.
+    https://bigpicture.typepad.com/comments/files/turtlerules.pdf
+    https://github.com/myquant/strategy/blob/master/Turtle/info.md
+    https://zhuanlan.zhihu.com/p/161882477
+    trend following
+    entry: price > 20 day High
+    add: for every 0.5 ATR, up to 3 times
+    stop: < 2 ATR
+    stop: < 10 day Low
+    It makes investments in units: one price unit is one ATR; one size unit is 1% of asset / ATR.
 '''
 import os
 import numpy as np
@@ -16,18 +20,31 @@ from IPython.core.display import display, HTML
 # set browser full width
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
-class DynamicBreakoutII(bt.Strategy):
+class Turtle(bt.Strategy):
     params = (
+        ('long_window', 20),
+        ('short_window', 10),
         ('printlog', False),        # comma is required
     )
 
     def __init__(self):
         self.order = None
-        self.buyprice = None
-        self.buycomm = None
-        self.bar_executed = None
-        self.val_start = None
-        self.lookback_days = 20
+        self.buyprice = 0.0
+        self.buycomm = 0.0
+        self.bar_executed = 0
+        self.val_start = 0.0
+
+        self.buy_count = 0
+        self.don_high = bt.indicators.Highest(self.data.high(-1), period=self.params.long_window)
+        self.don_low = bt.indicators.Lowest(self.data.low(-1), period=self.params.short_window)
+        # https://en.wikipedia.org/wiki/Average_true_range
+        self.TR = bt.indicators.Max((self.data.high(0) - self.data.low(0)), \
+                                    abs(self.data.close(-1) - self.data.high(0)), \
+                                    abs(self.data.close(-1) - self.data.low(0)))
+        self.ATR = bt.indicators.SimpleMovingAverage(self.TR, period=14)
+
+        self.buy_signal = bt.ind.CrossOver(self.data.close(0), self.don_high)
+        self.sell_signal = bt.ind.CrossOver(self.data.close(0), self.don_low)
 
     def log(self, txt, dt=None, doprint=False):
         ''' Logging function fot this strategy'''
@@ -84,53 +101,37 @@ class DynamicBreakoutII(bt.Strategy):
         if self.order:
             return
 
-        # check adaptive lookback days
-        if len(self.datas[0].close) < self.lookback_days+1:
-            return
-        else:
-            today_vol = np.std(self.datas[0].close.get(0, self.lookback_days))
-            yesterday_vol = np.std(self.datas[0].close.get(1, self.lookback_days))
-            delta_vol = (today_vol / yesterday_vol) / today_vol
-            self.lookback_days = round(self.lookback_days * (1+delta_vol), 0)
-            self.lookback_days = int(min(max(self.lookback_days, 20), 60))
-            if len(self.datas[0].close) < self.lookback_days:
-                return
-
-        # buy if close price > bollinger upper band and close price > Donchian HH
-        # sell if close price < bollinger lower band and close price < Donchian LL
-        current_price = self.datas[0].close[0]
-        current_size = self.getposition(self.datas[0]).size
-        hh = max(self.datas[0].high.get(1, self.lookback_days-1))
-        ll = min(self.datas[0].low.get(1, self.lookback_days-1))
-        ma = np.average(self.datas[0].close.get(0, self.lookback_days))
-        sd = np.std(self.datas[0].close.get(0, self.lookback_days))
-        ub = ma + 2.0*sd
-        lb = ma - 2.0*sd
-
-        if current_size == 0:
-            target_size = int(self.broker.get_value() / current_price * 0.95)
-            if current_price > ub: #and current_price > hh:
-                self.order = self.order_target_size(target=target_size)
-                self.log(f'LONG ORDER SENT, price: {current_price:.2f}, ub: {ub:.2f}, hh: {hh:.2f}, size: {target_size}')
-            elif current_price < lb: #and current_price < ll:
-                self.order = self.order_target_size(target=-target_size)
-                self.log(f'SHORT ORDER SENT, price: {current_price:.2f}, lb: {lb:.2f}, ll: {ll:.2f}, size: {-target_size}')
-        # exit long if price < MA; exit short if price > MA
-        elif current_size > 0:
-            if current_price < ma:
-                self.order = self.order_target_size(target=0)
-                self.log(f'FLAT LONG ORDER SENT, price: {current_price:.2f}, ma: {ma:.2f}, size: {-current_size}')
-        else:
-            if current_price > ma:
-                self.order = self.order_target_size(target=0)
-                self.log(f'FLAT SHORT ORDER SENT, price: {current_price:.2f}, ma: {ma:.2f}, size: {-current_size}')
+        # Long
+        if self.buy_signal > 0 and self.buy_count == 0:
+            # one unit is 1% of total risk asset
+            target_size = int(self.broker.getvalue() * 0.01 / self.ATR[0])
+            self.order = self.order_target_size(target=target_size)
+            self.log(f'LONG ORDER SENT, price: {self.data.close[0]:.2f}, don_high: {self.don_high[0]:.2f}')
+            self.buy_count = 1
+        # add; This is for futures; may go beyond notional; leverage is set to 4
+        elif self.data.close > self.buyprice + 0.5 * self.ATR[0] and self.buy_count > 0 and self.buy_count <= 3:
+            target_size = int(self.broker.getvalue() * 0.01 / self.ATR[0])
+            target_size += self.getposition(self.datas[0]).size        # on top of current size
+            self.order = self.order_target_size(target=target_size)
+            self.log(f'ADD LONG ORDER SENT, add time: {self.buy_count}, price: {self.data.close[0]:.2f}, don_high: {self.don_high[0]:.2f}')
+            self.buy_count += 1
+        # flat
+        elif self.sell_signal < 0 and self.buy_count > 0:
+            self.order = self.order_target_size(target=0)
+            self.log(f'FLAT ORDER SENT, price: {self.data.close[0]:.2f}, don_low: {self.don_low[0]:.2f}')
+            self.buy_count = 0
+        # flat, stop loss
+        elif self.data.close < (self.buyprice - 2 * self.ATR[0]) and self.buy_count > 0:
+            self.order = self.order_target_size(target=0)
+            self.log(f'FLAT ORDER SENT, price: {self.data.close[0]:.2f}, {self.buyprice:.2f}, 2ATR: {2 * self.ATR[0]:.2f}')
+            self.buy_count = 0
 
     def stop(self):
         # calculate the actual returns
         print(self.analyzers)
         roi = (self.broker.get_value() / self.val_start) - 1.0
         self.log('ROI:        {:.2f}%'.format(100.0 * roi))
-        self.log('(Dynamic Breakout Ending Value %.2f' %
+        self.log('(Turtle Ending Value %.2f' %
                   self.broker.getvalue(), doprint=True)
 
 
@@ -162,13 +163,13 @@ if __name__ == '__main__':
     # cerebro.addsizer(bt.sizers.PercentSizerInt, percents=95)
 
     # Set the commission - 0.1% ... divide by 100 to remove the %
-    cerebro.broker.setcommission(commission=0.001)
+    cerebro.broker.setcommission(commission=0.001, leverage=10)
 
     # Print out the starting conditions
     print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
 
     # Add a strategy
-    cerebro.addstrategy(DynamicBreakoutII, printlog=True)
+    cerebro.addstrategy(Turtle, printlog=True)
 
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')
