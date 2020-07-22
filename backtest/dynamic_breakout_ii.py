@@ -1,24 +1,11 @@
 '''
-    https://programming.vip/docs/r-breaker-strategy-for-commodity-futures.html
-    https://github.com/myquant/strategy/blob/master/R-Breaker/info.md
-    The R-Breaker strategy was developed by Richard Saidenberg and published in 1994.
-    After that, it was ranked one of the top 10 most profitable trading strategies
-    by Futures Truth magazine in the United States for 15 consecutive years.
-    Simply put, the R-Breaker strategy is a support and resistance level strategy,
-    which calculates seven prices based on yesterday's highest, lowest and closing prices
-
-    The R - Breaker strategy draws grid - like price lines based on yesterday's prices and updates them once a day.
-    The support position and resistance position in technical analysis, and their roles can be converted to each other.
-    When the price successfully breaks up the resistance level, the resistance level becomes the support level;
-    when the price successfully breaks down the support level, the support level becomes the resistance level.
-
-    In the Forex trading system, the Pivot Points trading method is a classic trading strategy.
-    Pivot Points is a very simple resistance support system.
-    Based on yesterday's highest, lowest and closing prices, seven price points are calculated,
-    including one pivot point, three resistance levels and three support levels.
-
-    It is a day trading strategy, generally not overnight.
-    Here I'm using close price, performance is expected to deteriorate.
+    Pruitt, George, and John R. Hill. Building Winning Trading Systems with Tradestation,+ Website. Vol. 542. John Wiley & Sons, 2012.
+    By George Pruitt in 1996
+    https://www.quantconnect.com/tutorials/strategy-library/the-dynamic-breakout-ii-strategy
+    1. Adaptive Donchian lookback parameter to current market: In volatile markets, using longer lookback to avoid frequent in-and-out. In trending markets; using shorter lookback to follow the trend.
+       if volatility changed x% from yesterday, change lookback x%. lookback falls between [20, 60]; Volatility can be ATR, stdev, or VIX
+    2. Another condition is adaptive bollinger bands. It needs to be confirmed before openning a position.
+    3. Adaptive moving average is used for stop loss.
 '''
 import os
 import numpy as np
@@ -29,7 +16,7 @@ from IPython.core.display import display, HTML
 # set browser full width
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
-class RBreaker(bt.Strategy):
+class DynamicBreakoutII(bt.Strategy):
     params = (
         ('printlog', False),        # comma is required
     )
@@ -40,8 +27,7 @@ class RBreaker(bt.Strategy):
         self.buycomm = None
         self.bar_executed = None
         self.val_start = None
-        self.price_entered = 0.0
-        self.stop_loss_price = 10
+        self.lookback_days = 20
 
     def log(self, txt, dt=None, doprint=False):
         ''' Logging function fot this strategy'''
@@ -98,64 +84,53 @@ class RBreaker(bt.Strategy):
         if self.order:
             return
 
-        # need yesterday's prices
-        if len(self.datas[0].close) <= 1:
+        # check adaptive lookback days
+        if len(self.datas[0].close) < self.lookback_days+1:
             return
+        else:
+            today_vol = np.std(self.datas[0].close.get(0, self.lookback_days))
+            yesterday_vol = np.std(self.datas[0].close.get(1, self.lookback_days))
+            delta_vol = (today_vol / yesterday_vol) / today_vol
+            self.lookback_days = round(self.lookback_days * (1+delta_vol), 0)
+            self.lookback_days = int(min(max(self.lookback_days, 20), 60))
+            if len(self.datas[0].close) < self.lookback_days:
+                return
 
-        yesterday_open = self.datas[0].open[-1]
-        yesterday_high = self.datas[0].high[-1]
-        yesterday_low = self.datas[0].low[-1]
-        yesterday_close = self.datas[0].close[-1]
+        # buy if close price > bollinger upper band and close price > Donchian HH
+        # sell if close price < bollinger lower band and close price < Donchian LL
+        current_price = self.datas[0].close[0]
+        current_size = self.getposition(self.datas[0]).size
+        hh = max(self.datas[0].high.get(0, self.lookback_days))
+        ll = min(self.datas[0].low.get(0, self.lookback_days))
+        ma = np.average(self.datas[0].close.get(0, self.lookback_days))
+        sd = np.std(self.datas[0].close.get(0, self.lookback_days))
+        ub = ma + 2.0*sd
+        lb = ma - 2.0*sd
 
-        # center or middle price
-        pivot = (yesterday_high + yesterday_close + yesterday_low) / 3  # pivot point
-        # r3 > r2 > r1
-        r1 = 2 * pivot - yesterday_low  # Resistance Level 1; Reverse Selling price
-        r2 = pivot + (yesterday_high - yesterday_low)  # Resistance Level 2; setup; Observed Sell Price
-        r3 = yesterday_high + 2 * (pivot - yesterday_low)  # Resistance Level 3; break through buy
-        # s1 > s2 > s3
-        s1 = 2 * pivot - yesterday_high  # Support 1; reverse buying
-        s2 = pivot - (yesterday_high - yesterday_low)  # Support Position 2; setup; Observed Buy Price
-        s3 = yesterday_low - 2 * (yesterday_high - pivot)  # Support 3; break through sell
-
-        today_high = self.datas[0].high[0]  # Day High Price
-        today_low = self.datas[0].low[0]  # Today's Lowest Price
-        current_price = self.datas[0].close[0] # Current price
-
-        # if diff between price entered and current price > stop loss trigger, stop loss
-        # if (self.current_position > 0 and self.price_entered - current_price >= self.STOP_LOSS_PRICE) or \
-        #         (self.current_position < 0 and current_price - self.price_entered >= self.STOP_LOSS_PRICE):
-        #     target_size = 0
-        #     self.order = self.order_target_size(target=target_size)
-        #     self.log(f'STOP LOSS ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
-
-
-        if self.position.size == 0:       # If no position
-            if current_price > r3:          # If the current price breaks through resistance level 3/highest, go long
-                target_size = int(self.broker.get_value() / current_price * 0.95)
+        if current_size == 0:
+            target_size = int(self.broker.get_value() / current_price * 0.95)
+            if current_price > ub: # and current_price > hh:
                 self.order = self.order_target_size(target=target_size)
-                self.log(f'BUY ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
-            if current_price < s3:  # If the current price break-through support level 3/lowest, go short
-                target_size = -int(self.broker.get_value() / current_price * 0.95)
-                self.order = self.order_target_size(target=target_size)
-                self.log(f'SELL ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
-        elif self.position.size  > 0:
-            if (today_high > r2 and current_price < r1) or current_price < s3:  # price reverses. flip from long to short
-                target_size = -int(self.broker.get_value() / current_price * 0.95)
-                self.order = self.order_target_size(target=target_size)
-                self.log(f'FLIP TO SHORT ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
-        elif self.position.size  < 0:
-            if (today_low < s2 and current_price > s1) or current_price > r3:   # price reverses, flip from short to long
-                target_size = int(self.broker.get_value() / current_price * 0.95)
-                self.order = self.order_target_size(target=target_size)
-                self.log(f'FLIP TO LONG ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
+                self.log(f'LONG ORDER SENT, price: {current_price:.2f}, ub: {ub:.2f}, hh: {hh:.2f}, size: {target_size}')
+            elif current_price < lb: #and current_price < ll:
+                self.order = self.order_target_size(target=-target_size)
+                self.log(f'SHORT ORDER SENT, price: {current_price:.2f}, lb: {lb:.2f}, ll: {ll:.2f}, size: {-target_size}')
+        # exit long if price < MA; exit short if price > MA
+        elif current_size > 0:
+            if current_price < ma:
+                self.order = self.order_target_size(target=0)
+                self.log(f'FLAT LONG ORDER SENT, price: {current_price:.2f}, ma: {ma:.2f}, size: {-current_size}')
+        else:
+            if current_price > ma:
+                self.order = self.order_target_size(target=0)
+                self.log(f'FLAT SHORT ORDER SENT, price: {current_price:.2f}, ma: {ma:.2f}, size: {-current_size}')
 
     def stop(self):
         # calculate the actual returns
         print(self.analyzers)
         roi = (self.broker.get_value() / self.val_start) - 1.0
         self.log('ROI:        {:.2f}%'.format(100.0 * roi))
-        self.log('(Ghost Trader params Ending Value %.2f' %
+        self.log('(Dynamic Breakout Ending Value %.2f' %
                   self.broker.getvalue(), doprint=True)
 
 
@@ -193,7 +168,7 @@ if __name__ == '__main__':
     print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
 
     # Add a strategy
-    cerebro.addstrategy(RBreaker, printlog=True)
+    cerebro.addstrategy(DynamicBreakoutII, printlog=True)
 
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')

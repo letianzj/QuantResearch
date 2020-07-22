@@ -11,8 +11,9 @@ Test against daily bars between 2010 and 2019, using [Backtrader](https://www.ba
 |5 |  [Dual Thrust](./dual_thrust.py)    | -0.55|
 |6 |  [Ghost Trader](./ghost_trader.py)    | -0.74|
 |7 |  [R-Breaker](./r_breaker.py)    | -0.22|
-|8 |  [Mebane Faber TAA](./mebane_faber_taa.py)    | 0.40|
-|9 |  [MinVar, MaxSharpe, MaxDiversified, RiskParity](./portfolio_optimization.py)    | 0.93, 0.37, 0.71, 0.66|
+|8 |  [R-Breaker](./dynamic_breakout_ii.py)    | -0.28|
+|9 |  [Mebane Faber TAA](./mebane_faber_taa.py)    | 0.40|
+|10 |  [MinVar, MaxSharpe, MaxDiversified, RiskParity](./portfolio_optimization.py)    | 0.93, 0.37, 0.71, 0.66|
 
 ```python
 
