@@ -1,11 +1,11 @@
 # QuantResearch
 Notebooks and Backtests
 
-
 |Index |Notebooks                                                                         |Blogs        |
 |----:|:---------------------------------------------------------------------------------|-----------:|
-|0 |  [Backtest](./backtest)    |[data](./backtest/hist_downloader.py)|
-|0 |  [Machine Learning](./ml)    ||
+|* |  [Backtest](./backtest)    |[data downloader](./backtest/hist_downloader.py)|
+|* |  [Machine Learning](./ml)    ||
+|* |  [Online Resources](./Resources.md)    ||
 |1 |  [Portfolio Optimization One](./notebooks/portfolio_management_one.py)    |[link](https://letianzj.github.io/portfolio-management-one.html)|
 |2 |  [Value at Risk One](./notebooks/value_at_risk_one.py)    |[link](https://letianzj.github.io/value-at-risk-one.html)|
 |3 |  [Classical Linear Regression](./notebooks/classical_linear_regression.py)    |[link](https://letianzj.github.io/classical-linear-regression.html)|

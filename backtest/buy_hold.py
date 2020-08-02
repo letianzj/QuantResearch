@@ -1,136 +1,88 @@
+'''
+buy hold
+'''
 import os
+import numpy as np
 import pandas as pd
-from datetime import datetime
-import backtrader as bt
+import pytz
+from datetime import datetime, timezone
+import multiprocessing
+import quanttrading2 as qt
+import matplotlib.pyplot as plt
+import empyrical as ep
+import pyfolio as pf
+# set browser full width
+from IPython.core.display import display, HTML
+display(HTML("<style>.container { width:100% !important; }</style>"))
 
-class BuyAndHold(bt.Strategy):
+
+class BuyAndHoldStrategy(qt.StrategyBase):
+    """
+    buy on the first tick then hold to the end
+    """
+
     def __init__(self):
-        # To keep track of pending orders and buy price/commission
-        self.order = None
+        super(BuyAndHoldStrategy, self).__init__()
+        self.invested = False
 
-    def log(self, txt, dt=None):
-        ''' Logging function fot this strategy'''
-        dt = dt or self.datas[0].datetime.date(0)
-        print('%s, %s' % (dt.isoformat(), txt))
-
-    def start(self):
-        self.val_start = self.broker.get_cash()  # keep the starting cash
-
-    def notify_trade(self, trade):
-        if not trade.isclosed:
-            return
-        self.log('OPERATION PROFIT, GROSS %.2f, NET %.2f' % (trade.pnl, trade.pnlcomm))
-
-    def notify_order(self, order):
-        if order.status in [order.Submitted, order.Accepted]:
-            # Buy/Sell order submitted/accepted to/by broker - Nothing to do
-            return
-
-        # Check if an order has been completed
-        # Attention: broker could reject order if not enough cash
-        if order.status in [order.Completed]:
-            if order.isbuy():
-                self.log(
-                    'BUY EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' %
-                    (order.executed.price,
-                     order.executed.value,
-                     order.executed.comm))
-
-                self.buyprice = order.executed.price
-                self.buycomm = order.executed.comm
-            else:  # Sell
-                self.log('SELL EXECUTED, Price: %.2f, Cost: %.2f, Comm %.2f' %
-                         (order.executed.price,
-                          order.executed.value,
-                          order.executed.comm))
-
-            self.bar_executed = len(self)
-
-    def next(self):
-        # Simply log the closing price of the series from the reference
-        # self.log('Close, %.2f' % self.data.close[0])
-        # Buy all the available cash
-        # self.order_target_value(target=self.broker.get_cash())
-        #size = int(self.broker.get_cash() / self.data)
-        #self.order = self.buy(size=size)
-        self.buy()
-
-    def stop(self):
-        # calculate the actual returns
-        self.roi = (self.broker.get_value() / self.val_start) - 1.0
-        print('ROI:        {:.2f}%'.format(100.0 * self.roi))
+    def on_tick(self, event):
+        print(event.timestamp)
+        symbol = self.symbols[0]
+        if not self.invested:
+            df_hist = self._data_board.get_hist_price(symbol, event.timestamp)
+            close = df_hist.iloc[-1].Close
+            target_size = int(self.cash / close)
+            self.adjust_position(symbol, size_from=0, size_to=target_size)
+            self.invested = True
 
 
 if __name__ == '__main__':
-    # Create a cerebro entitysetsizing
-    cerebro = bt.Cerebro()
+    run_in_jupyter = False
+    symbol = 'SPX'
+    benchmark = 'SPX'
+    datapath = os.path.join('../data/', f'{symbol}.csv')
+    data = qt.util.read_ohlcv_csv(datapath)
+    init_capital = 100_000.0
+    test_start_date = datetime(2010,1,1, 8, 30, 0, 0, pytz.timezone('America/New_York'))
+    test_end_date = datetime(2019,12,31, 6, 0, 0, 0, pytz.timezone('America/New_York'))
 
-    datapath = os.path.join('../data/', 'SPX.csv')
+    strategy = BuyAndHoldStrategy()
+    strategy.set_capital(init_capital)
+    strategy.set_symbols([symbol])
+    strategy.set_params(None)
 
     # Create a Data Feed
-    data = bt.feeds.YahooFinanceCSVData(
-        dataname=datapath,
-        # Do not pass values before this date
-        fromdate=datetime(2010, 1, 1),
-        # Do not pass values before this date
-        todate=datetime(2019, 12, 31),
-        # Do not pass values after this date
-        reverse=False)
+    backtest_engine = qt.BacktestEngine(test_start_date, test_end_date)
+    backtest_engine.set_capital(init_capital)  # capital or portfolio >= capital for one strategy
+    backtest_engine.add_data(symbol, data)
+    backtest_engine.set_strategy(strategy)
+    ds_equity, df_positions, df_trades = backtest_engine.run()
+    # save to excel
+    qt.util.save_one_run_results('./output', ds_equity, df_positions, df_trades)
 
-    # Add the Data Feed to Cerebro
-    cerebro.adddata(data)
+    # ------------------------- Evaluation and Plotting -------------------------------------- #
+    strat_ret = ds_equity.pct_change().dropna()
+    strat_ret.name = 'strat'
+    bm = qt.util.read_ohlcv_csv(os.path.join('../data/', f'{benchmark}.csv'))
+    bm_ret = bm['Close'].pct_change().dropna()
+    bm_ret.index = pd.to_datetime(bm_ret.index)
+    bm_ret = bm_ret[strat_ret.index]
+    bm_ret.name = 'benchmark'
 
-    # Set our desired cash start
-    cerebro.broker.setcash(100000.0)
+    perf_stats_strat = pf.timeseries.perf_stats(strat_ret)
+    perf_stats_all = perf_stats_strat
+    perf_stats_bm = pf.timeseries.perf_stats(bm_ret)
+    perf_stats_all = pd.concat([perf_stats_strat, perf_stats_bm], axis=1)
+    perf_stats_all.columns = ['Strategy', 'Benchmark']
 
-    # Add a FixedSize sizer according to the stake
-    # cerebro.addsizer(bt.sizers.FixedSize, stake=10)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=95)
-
-    # Set the commission - 0.1% ... divide by 100 to remove the %
-    cerebro.broker.setcommission(commission=0.001)
-    # cheat-on-close
-    cerebro.broker.set_coc(True)          # doesn't seems to be working
-
-    # Print out the starting conditions
-    print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
-
-    # Add Analyzer
-    cerebro.addanalyzer(bt.analyzers.PyFolio, _name='pyfolio')
-
-    # Add a strategy
-    cerebro.addstrategy(BuyAndHold)
-
-    # Run over everything
-    results = cerebro.run()
-
-    # Print out the final result
-    print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
-    cerebro.plot(style='candlestick')
-
-    strat = results[0]
-    pyfoliozer = strat.analyzers.getbyname('pyfolio')
-    returns, positions, transactions, gross_lev = pyfoliozer.get_pf_items()
-    print('-------------- RETURNS ----------------')
-    print(returns)
-    print('-------------- POSITIONS ----------------')
-    print(positions)
-    print('-------------- TRANSACTIONS ----------------')
-    print(transactions)
-    print('-------------- GROSS LEVERAGE ----------------')
-    print(gross_lev)
-
-    import empyrical as ep
-    import pyfolio as pf
-    import matplotlib.pyplot as plt
-    perf_stats_strat = pf.timeseries.perf_stats(returns)
-    drawdown_table = pf.timeseries.gen_drawdown_table(returns, 5)
-    monthly_ret_table = ep.aggregate_returns(returns, 'monthly')
+    drawdown_table = pf.timeseries.gen_drawdown_table(strat_ret, 5)
+    monthly_ret_table = ep.aggregate_returns(strat_ret, 'monthly')
     monthly_ret_table = monthly_ret_table.unstack().round(3)
-    ann_ret_df = pd.DataFrame(ep.aggregate_returns(returns, 'yearly'))
+    ann_ret_df = pd.DataFrame(ep.aggregate_returns(strat_ret, 'yearly'))
     ann_ret_df = ann_ret_df.unstack().round(3)
+
     print('-------------- PERFORMANCE ----------------')
-    print(perf_stats_strat)
+    print(perf_stats_all)
     print('-------------- DRAWDOWN ----------------')
     print(drawdown_table)
     print('-------------- MONTHLY RETURN ----------------')
@@ -138,10 +90,33 @@ if __name__ == '__main__':
     print('-------------- ANNUAL RETURN ----------------')
     print(ann_ret_df)
 
-    pf.create_full_tear_sheet(
-        returns,
-        positions=positions,
-        transactions=transactions,
-        #live_start_date='2005-05-01',
-        round_trips=False)
-    plt.show()
+    if run_in_jupyter:
+        pf.create_full_tear_sheet(
+            strat_ret,
+            benchmark_rets=bm_ret,
+            positions=df_positions,
+            transactions=df_trades,
+            round_trips=False)
+        plt.show()
+    else:
+        f1 = plt.figure(1)
+        pf.plot_rolling_returns(strat_ret, factor_returns=bm_ret)
+        f1.show()
+        f2 = plt.figure(2)
+        pf.plot_rolling_volatility(strat_ret, factor_returns=bm_ret)
+        f2.show()
+        f3 = plt.figure(3)
+        pf.plot_rolling_sharpe(strat_ret)
+        f3.show()
+        f4 = plt.figure(4)
+        pf.plot_drawdown_periods(strat_ret)
+        f4.show()
+        f5 = plt.figure(5)
+        pf.plot_monthly_returns_heatmap(strat_ret)
+        f5.show()
+        f6 = plt.figure(6)
+        pf.plot_annual_returns(strat_ret)
+        f6.show()
+        f7 = plt.figure(7)
+        pf.plot_monthly_returns_dist(strat_ret)
+        plt.show()

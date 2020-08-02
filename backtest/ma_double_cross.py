@@ -1,229 +1,150 @@
 '''
-Classical MovingAverageCrossStrategy, golden cross buy; dead cross sell
-Close position when opposite cross happens
-sharpe 0.4 vs spx 0.67
+golden cross buy; dead cross sell
 '''
 import os
+import numpy as np
 import pandas as pd
-from datetime import datetime
-import backtrader as bt
+import pytz
+from datetime import datetime, timezone
+import multiprocessing
+import quanttrading2 as qt
+import matplotlib.pyplot as plt
+import empyrical as ep
+import pyfolio as pf
 # set browser full width
 from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
-class MADoubleCross(bt.Strategy):
-    params = (
-        ('short_window', 20),
-        ('long_window', 20),
-        ('printlog', False),        # comma is required
-    )
 
-    def __init__(self):
-        self.order = None
-        self.buyprice = None
-        self.buycomm = None
-        self.bar_executed = None
-        self.val_start = None
-        self.dataclose = self.datas[0].close
-        self.short_ema = bt.indicators.ExponentialMovingAverage(self.dataclose, period = self.params.short_window)
-        self.long_ema = bt.indicators.ExponentialMovingAverage(self.dataclose, period = self.params.long_window)
+class MADoubleCross(qt.StrategyBase):
+    def __init__(self,
+            short_window=50, long_window=200
+    ):
+        super(MADoubleCross, self).__init__()
+        self.short_window = short_window
+        self.long_window = long_window
+        self.current_time = None
+        self.current_position = 0
 
-    def log(self, txt, dt=None, doprint=False):
-        ''' Logging function fot this strategy'''
-        if self.params.printlog or doprint:
-            dt = dt or self.datas[0].datetime.date(0)
-            print('%s, %s' % (dt.isoformat(), txt))
+    def on_tick(self, tick_event):
+        self.current_time = tick_event.timestamp
+        # print('Processing {}'.format(self.current_time))
+        symbol = self.symbols[0]
 
-    def start(self):
-        self.val_start = self.broker.get_cash()  # keep the starting cash
+        df_hist = self._data_board.get_hist_price(symbol, tick_event.timestamp)
+        current_price = df_hist.iloc[-1].Close
 
-    def notify_trade(self, trade):
-        if not trade.isclosed:
-            return
-        self.log('OPERATION PROFIT, GROSS %.2f, NET %.2f' % (trade.pnl, trade.pnlcomm))
+        # wait for enough bars
+        if df_hist.shape[0] >= self.long_window:
+            # Calculate the simple moving averages
+            short_sma = np.mean(df_hist['Close'][-self.short_window:])
+            long_sma = np.mean(df_hist['Close'][-self.long_window:])
+            # Trading signals based on moving average cross
+            if short_sma > long_sma and self.current_position <= 0:
+                target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
+                self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
+                self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
+                print("Long: %s, short_sma %s, long_sma %s, price %s, trade %s, new position %s" % (self.current_time, str(short_sma), str(long_sma), str(current_price), str(target_size-self.current_position), str(target_size)))
+                self.current_position = target_size
+            elif short_sma < long_sma and self.current_position >= 0:
+                target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
+                self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
+                self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
+                print("Short: %s, short_sma %s, long_sma %s, price %s, trade %s, new position %s" % (self.current_time, str(short_sma), str(long_sma), str(current_price), str(target_size-self.current_position), str(target_size)))
+                self.current_position = target_size
 
-    def notify_order(self, order):
-        if order.status in [order.Submitted, order.Accepted]:
-            # Buy/Sell order submitted/accepted to/by broker - Nothing to do
-            return
 
-        # Check if an order has been completed
-        # Attention: broker could reject order if not enough cash
-        if order.status in [order.Completed]:                # order.Partial
-            if order.isbuy():
-                self.log(
-                    'BUY EXECUTED, Price: %.2f, Size: %.0f, Cost: %.2f, Comm %.2f, RemSize: %.0f, RemCash: %.2f' %
-                    (order.executed.price,
-                     order.executed.size,
-                     order.executed.value,
-                     order.executed.comm,
-                     order.executed.remsize,
-                     self.broker.get_cash()))
-
-                self.buyprice = order.executed.price
-                self.buycomm = order.executed.comm
-            else:  # Sell
-                self.log('SELL EXECUTED, Price: %.2f, Size: %.0f, Cost: %.2f, Comm %.2f, RemSize: %.0f, RemCash: %.2f' %
-                         (order.executed.price,
-                          order.executed.size,
-                          order.executed.value,
-                          order.executed.comm,
-                          order.executed.remsize,
-                          self.broker.get_cash()))
-
-            self.bar_executed = len(self)
-        elif order.status in [order.Canceled, order.Expired, order.Margin, order.Rejected]:
-            self.log('Order Failed')
-
-        self.order = None
-
-    def next(self):
-        # Simply log the closing price of the series from the reference
-        # self.log('Close, %.2f' % self.data.close[0])
-        if self.order:
-            return
-
-        # open position
-        if self.position.size == 0:
-            if self.short_ema[0] > self.long_ema[0]:
-                self.order = self.buy()
-                self.log('BUY ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=True)))
-            else:
-                self.order = self.sell()
-                self.log('SELL ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=False)))
-        # close position;
-        else:
-            if self.short_ema[0] > self.long_ema[0] and self.position.size < 0:
-                self.order = self.buy()
-                self.log('BUY ORDER SENT, Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=True)))
-            elif self.short_ema[0] < self.long_ema[0] and self.position.size > 0:
-                self.order = self.sell()
-                self.log('SELL ORDER SENT,Price: %.2f, S-EMA: %.2f., L-EMA: %.2f, Size: %.2f' %
-                         (self.dataclose[0],
-                          self.short_ema[0],
-                          self.long_ema[0],
-                          self.getsizing(isbuy=False)))
-
-    def stop(self):
-        # calculate the actual returns
-        print(self.analyzers)
-        roi = (self.broker.get_value() / self.val_start) - 1.0
-        self.log('ROI:        {:.2f}%'.format(100.0 * roi))
-        self.log('(MA Period (%2d, %2d)) Ending Value %.2f' %
-                 (self.params.short_window, self.params.long_window, self.broker.getvalue()), doprint=True)
+def parameter_search(engine, tag, target_name, return_dict):
+    """
+    This function should be the same for all strategies.
+    The only reason not included in quanttrading2 is because of its dependency on pyfolio (to get perf_stats)
+    """
+    ds_equity, _, _ = engine.run()
+    try:
+        strat_ret = ds_equity.pct_change().dropna()
+        perf_stats_strat = pf.timeseries.perf_stats(strat_ret)
+        target_value = perf_stats_strat.loc[target_name]  # first table in tuple
+    except KeyError:
+        target_value = 0
+    return_dict[tag] = target_value
 
 
 if __name__ == '__main__':
-    param_opt = False
-    perf_eval = True
+    do_optimize = False
+    run_in_jupyter = False
+    symbol = 'SPX'
     benchmark = 'SPX'
+    datapath = os.path.join('../data/', f'{symbol}.csv')
+    data = qt.util.read_ohlcv_csv(datapath)
+    init_capital = 100_000.0
+    test_start_date = datetime(2010,1,1, 8, 30, 0, 0, pytz.timezone('America/New_York'))
+    test_end_date = datetime(2019,12,31, 6, 0, 0, 0, pytz.timezone('America/New_York'))
 
-    cerebro = bt.Cerebro()
+    if do_optimize:          # parallel parameter search
+        params_list = []
+        for sw in [10, 20, 30, 50, 100, 200]:
+            for lw in [10, 20, 30, 50, 100, 200]:
+                if lw <= sw:
+                    continue
+                params_list.append({'short_window': sw, 'long_window': lw})
+        target_name = 'Sharpe ratio'
+        manager = multiprocessing.Manager()
+        return_dict = manager.dict()
+        jobs = []
+        for params in params_list:
+            strategy = MADoubleCross()
+            strategy.set_capital(init_capital)
+            strategy.set_symbols([symbol])
+            backtest_engine = qt.BacktestEngine(test_start_date, test_end_date)
+            backtest_engine.set_capital(init_capital)  # capital or portfolio >= capital for one strategy
+            backtest_engine.add_data(symbol, data)
+            strategy.set_params({'short_window': params['short_window'], 'long_window': params['long_window']})
+            backtest_engine.set_strategy(strategy)
+            tag = (params['short_window'], params['long_window'])
+            p = multiprocessing.Process(target=parameter_search, args=(backtest_engine, tag, target_name, return_dict))
+            jobs.append(p)
+            p.start()
 
-    datapath = os.path.join('../data/', 'SPX.csv')
-
-    # Create a Data Feed
-    data = bt.feeds.YahooFinanceCSVData(
-        dataname=datapath,
-        fromdate=datetime(2010, 1, 1),
-        todate=datetime(2019, 12, 31),
-        reverse=False)
-
-    # Add the Data Feed to Cerebro
-    cerebro.adddata(data)
-
-    # Set our desired cash start
-    cerebro.broker.setcash(100000.0)
-
-    # Add a FixedSize sizer according to the stake
-    # cerebro.addsizer(bt.sizers.FixedSize, stake=10)
-    # PercentSizer will flat position first; overwrite if not desired.
-    cerebro.addsizer(bt.sizers.PercentSizerInt, percents=95)
-
-    # Set the commission - 0.1% ... divide by 100 to remove the %
-    cerebro.broker.setcommission(commission=0.001)
-
-    # Print out the starting conditions
-    print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
-
-    # Add a strategy
-    if param_opt:
-        # Optimization
-        cerebro.optstrategy(MADoubleCross, short_window=[10, 20], long_window=[50, 100, 200])
-        perf_eval = False
+        for proc in jobs:
+            proc.join()
+        for k,v in return_dict.items():
+            print(k, v)
     else:
-        cerebro.addstrategy(MADoubleCross, short_window=50, long_window=200, printlog=True)
+        strategy = MADoubleCross()
+        strategy.set_capital(init_capital)
+        strategy.set_symbols([symbol])
+        strategy.set_params({'short_window':20, 'long_window':200})
 
-    # Add Analyzer
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='SharpeRatio')
-    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='DrawDown')
-    cerebro.addanalyzer(bt.analyzers.PyFolio, _name='pyfolio')
+        # Create a Data Feed
+        backtest_engine = qt.BacktestEngine(test_start_date, test_end_date)
+        backtest_engine.set_capital(init_capital)  # capital or portfolio >= capital for one strategy
+        backtest_engine.add_data(symbol, data)
+        backtest_engine.set_strategy(strategy)
+        ds_equity, df_positions, df_trades = backtest_engine.run()
+        # save to excel
+        qt.util.save_one_run_results('./output', ds_equity, df_positions, df_trades)
 
-    # Run over everything
-    results = cerebro.run()
+        # ------------------------- Evaluation and Plotting -------------------------------------- #
+        strat_ret = ds_equity.pct_change().dropna()
+        strat_ret.name = 'strat'
+        bm = qt.util.read_ohlcv_csv(os.path.join('../data/', f'{benchmark}.csv'))
+        bm_ret = bm['Close'].pct_change().dropna()
+        bm_ret.index = pd.to_datetime(bm_ret.index)
+        bm_ret = bm_ret[strat_ret.index]
+        bm_ret.name = 'benchmark'
 
-    # Print out the final result
-    strat = results[0]
-    print('Final Portfolio Value: %.2f, Sharpe Ratio: %.2f, DrawDown: %.2f, MoneyDown %.2f' %
-          (cerebro.broker.getvalue(),
-           strat.analyzers.SharpeRatio.get_analysis()['sharperatio'],
-           strat.analyzers.DrawDown.get_analysis()['drawdown'],
-           strat.analyzers.DrawDown.get_analysis()['moneydown']))
-
-    if perf_eval:
-        import matplotlib.pyplot as plt
-        cerebro.plot(style='candlestick')
-        plt.show()
-
-        pyfoliozer = strat.analyzers.getbyname('pyfolio')
-        returns, positions, transactions, gross_lev = pyfoliozer.get_pf_items()
-        print('-------------- RETURNS ----------------')
-        print(returns)
-        print('-------------- POSITIONS ----------------')
-        print(positions)
-        print('-------------- TRANSACTIONS ----------------')
-        print(transactions)
-        print('-------------- GROSS LEVERAGE ----------------')
-        print(gross_lev)
-
-        import empyrical as ep
-        import pyfolio as pf
-
-        bm_ret = None
-        if benchmark:
-            datapath = os.path.join('../data/', f'{benchmark}.csv')
-            bm = pd.read_csv(datapath, index_col=0)
-            bm_ret = bm['Adj Close'].pct_change().dropna()
-            bm_ret.index = pd.to_datetime(bm_ret.index)
-            # remove tzinfo
-            returns.index = returns.index.tz_localize(None)
-            bm_ret = bm_ret[returns.index]
-            bm_ret.name = 'benchmark'
-
-        perf_stats_strat = pf.timeseries.perf_stats(returns)
+        perf_stats_strat = pf.timeseries.perf_stats(strat_ret)
         perf_stats_all = perf_stats_strat
-        if benchmark:
-            perf_stats_bm = pf.timeseries.perf_stats(bm_ret)
-            perf_stats_all = pd.concat([perf_stats_strat, perf_stats_bm], axis=1)
-            perf_stats_all.columns = ['Strategy', 'Benchmark']
+        perf_stats_bm = pf.timeseries.perf_stats(bm_ret)
+        perf_stats_all = pd.concat([perf_stats_strat, perf_stats_bm], axis=1)
+        perf_stats_all.columns = ['Strategy', 'Benchmark']
 
-        drawdown_table = pf.timeseries.gen_drawdown_table(returns, 5)
-        monthly_ret_table = ep.aggregate_returns(returns, 'monthly')
+        drawdown_table = pf.timeseries.gen_drawdown_table(strat_ret, 5)
+        monthly_ret_table = ep.aggregate_returns(strat_ret, 'monthly')
         monthly_ret_table = monthly_ret_table.unstack().round(3)
-        ann_ret_df = pd.DataFrame(ep.aggregate_returns(returns, 'yearly'))
+        ann_ret_df = pd.DataFrame(ep.aggregate_returns(strat_ret, 'yearly'))
         ann_ret_df = ann_ret_df.unstack().round(3)
+
         print('-------------- PERFORMANCE ----------------')
         print(perf_stats_all)
         print('-------------- DRAWDOWN ----------------')
@@ -233,11 +154,33 @@ if __name__ == '__main__':
         print('-------------- ANNUAL RETURN ----------------')
         print(ann_ret_df)
 
-        pf.create_full_tear_sheet(
-            returns,
-            benchmark_rets=bm_ret if benchmark else None,
-            positions=positions,
-            transactions=transactions,
-            #live_start_date='2005-05-01',
-            round_trips=False)
-        plt.show()
+        if run_in_jupyter:
+            pf.create_full_tear_sheet(
+                strat_ret,
+                benchmark_rets=bm_ret,
+                positions=df_positions,
+                transactions=df_trades,
+                round_trips=False)
+            plt.show()
+        else:
+            f1 = plt.figure(1)
+            pf.plot_rolling_returns(strat_ret, factor_returns=bm_ret)
+            f1.show()
+            f2 = plt.figure(2)
+            pf.plot_rolling_volatility(strat_ret, factor_returns=bm_ret)
+            f2.show()
+            f3 = plt.figure(3)
+            pf.plot_rolling_sharpe(strat_ret)
+            f3.show()
+            f4 = plt.figure(4)
+            pf.plot_drawdown_periods(strat_ret)
+            f4.show()
+            f5 = plt.figure(5)
+            pf.plot_monthly_returns_heatmap(strat_ret)
+            f5.show()
+            f6 = plt.figure(6)
+            pf.plot_annual_returns(strat_ret)
+            f6.show()
+            f7 = plt.figure(7)
+            pf.plot_monthly_returns_dist(strat_ret)
+            plt.show()
