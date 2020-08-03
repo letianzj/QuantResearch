@@ -35,23 +35,25 @@ class MADoubleCross(qt.StrategyBase):
         current_price = df_hist.iloc[-1].Close
 
         # wait for enough bars
-        if df_hist.shape[0] >= self.long_window:
-            # Calculate the simple moving averages
-            short_sma = np.mean(df_hist['Close'][-self.short_window:])
-            long_sma = np.mean(df_hist['Close'][-self.long_window:])
-            # Trading signals based on moving average cross
-            if short_sma > long_sma and self.current_position <= 0:
-                target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
-                self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-                self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
-                print("Long: %s, short_sma %s, long_sma %s, price %s, trade %s, new position %s" % (self.current_time, str(short_sma), str(long_sma), str(current_price), str(target_size-self.current_position), str(target_size)))
-                self.current_position = target_size
-            elif short_sma < long_sma and self.current_position >= 0:
-                target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
-                self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-                self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
-                print("Short: %s, short_sma %s, long_sma %s, price %s, trade %s, new position %s" % (self.current_time, str(short_sma), str(long_sma), str(current_price), str(target_size-self.current_position), str(target_size)))
-                self.current_position = target_size
+        if df_hist.shape[0] < self.long_window:
+            return
+
+        # Calculate the simple moving averages
+        short_sma = np.mean(df_hist['Close'][-self.short_window:])
+        long_sma = np.mean(df_hist['Close'][-self.long_window:])
+        # Trading signals based on moving average cross
+        if short_sma > long_sma and self.current_position <= 0:
+            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
+            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
+            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
+            print("Long: %s, short_sma %s, long_sma %s, price %s, trade %s, new position %s" % (self.current_time, str(short_sma), str(long_sma), str(current_price), str(target_size-self.current_position), str(target_size)))
+            self.current_position = target_size
+        elif short_sma < long_sma and self.current_position >= 0:
+            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
+            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
+            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
+            print("Short: %s, short_sma %s, long_sma %s, price %s, trade %s, new position %s" % (self.current_time, str(short_sma), str(long_sma), str(current_price), str(target_size-self.current_position), str(target_size)))
+            self.current_position = target_size
 
 
 def parameter_search(engine, tag, target_name, return_dict):

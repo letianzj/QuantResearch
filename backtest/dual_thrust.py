@@ -1,6 +1,14 @@
 """
-Buy/sell when price crosses above/below SMA;
-Close position when price crosses below/above SMA;
+The Dual Thrust trading algorithm is a famous strategy developed by Michael Chalek.
+It is a breakout system, commonly used in futures, forex and equity markets.
+The limits are based on today’s opening price plus or minus a certain percentage of recent trading range.
+When the price breaks through the upper level, it will long, and when it breaks the lower level, it will short.
+1. recent trading range is relatively stable, using four price points;
+2. Percentage K1 and K2 can be asymmetric
+https://www.quantconnect.com/tutorials/strategy-library/dual-thrust-trading-algorithm
+Similar to quantconnect, got negative Sharpe -0.377.
+It is an intraday breakout strategy, requires tickdata; holding position for a year is against the essence of this strategy.
+Improvements: 1. profit target and stop loss. 2. confirmation e.g. MA5min>MA10min
 """
 import os
 import numpy as np
@@ -8,6 +16,7 @@ import pandas as pd
 import pytz
 from datetime import datetime, timezone
 import multiprocessing
+import talib
 import quanttrading2 as qt
 import matplotlib.pyplot as plt
 import empyrical as ep
@@ -17,14 +26,15 @@ from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
 
-class MACross(qt.StrategyBase):
+class DualThrust(qt.StrategyBase):
     def __init__(self,
-            lookback=20
+            n=4, k1=0.5, k2=0.5
     ):
-        super(MACross, self).__init__()
-        self.lookback = lookback
+        super(DualThrust, self).__init__()
+        self.n = n
+        self.k1 = k1
+        self.k2 = k2
         self.current_time = None
-        self.current_position = 0
 
     def on_tick(self, tick_event):
         self.current_time = tick_event.timestamp
@@ -32,27 +42,38 @@ class MACross(qt.StrategyBase):
         symbol = self.symbols[0]
 
         df_hist = self._data_board.get_hist_price(symbol, tick_event.timestamp)
-        current_price = df_hist.iloc[-1].Close
 
-        # wait for enough bars
-        if df_hist.shape[0] > self.lookback:
+        # need n day trading range
+        if df_hist.shape[0] < self.n:
             return
 
-        # Calculate the simple moving averages
-        sma = np.mean(df_hist['Close'][-self.lookback:])
-        # Trading signals based on moving average cross
-        if current_price > sma and self.current_position <= 0:
-            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
-            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
-            print("Long: %s, sma %s, price %s, trade %s, new position %s" % (self.current_time, str(sma), str(current_price), str(target_size-self.current_position), str(target_size)))
-            self.current_position = target_size
-        elif current_price < sma and self.current_position >= 0:
-            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
-            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
-            print("Short: %s, sma %s, price %s, trade %s, new position %s" % (self.current_time, str(sma), str(current_price), str(target_size-self.current_position), str(target_size)))
-            self.current_position = target_size
+        high = df_hist.High.iloc[-self.n:]
+        low = df_hist.Low.iloc[-self.n:]
+        close = df_hist.Close.iloc[-self.n:]
+        current_open = df_hist.Open.iloc[-1]
+        current_price = df_hist.Close.iloc[-1]
+        current_size = self._position_manager.get_position_size(symbol)
+        npv = self._position_manager.current_total_capital
+
+        HH, HC, LC, LL = max(high), max(close), min(close), min(low)
+        signal_range = max(HH - LC, HC - LL)
+        selltrig = current_open - self.k2 * signal_range
+        buytrig = current_open + self.k1 * signal_range
+
+        if current_price > buytrig:   # buy on upper break
+            if current_size > 0:
+                return
+            target_size = int(npv / current_price)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            print(f'{self.current_time}, BUY ORDER SENT, {symbol}, Price: {current_price:.2f}, '
+                  f'Buy trigger: {buytrig:.2f}, Size: {current_size},  Target Size: {target_size}')
+        elif current_price < selltrig:   # sell on down break
+            if current_size < 0:
+                return
+            target_size = -int(npv / current_price)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            print(f'{self.current_time}, SELL ORDER SENT, {symbol}, Price: {current_price:.2f}, '
+                  f'Sell trigger: {selltrig:.2f}, Size: {current_size},  Target Size: {target_size}')
 
 
 def parameter_search(engine, tag, target_name, return_dict):
@@ -71,7 +92,7 @@ def parameter_search(engine, tag, target_name, return_dict):
 
 
 if __name__ == '__main__':
-    do_optimize = True
+    do_optimize = False
     run_in_jupyter = False
     symbol = 'SPX'
     benchmark = 'SPX'
@@ -83,22 +104,23 @@ if __name__ == '__main__':
 
     if do_optimize:          # parallel parameter search
         params_list = []
-        for lk in [10, 20, 30, 50, 100, 200]:
-            params_list.append({'lookback': lk})
+        for n_ in [3, 4, 5, 10]:
+            for k_ in [0.4, 0.5, 0.6]:
+                params_list.append({'n': n_, 'k1': k_, 'k2': k_})
         target_name = 'Sharpe ratio'
         manager = multiprocessing.Manager()
         return_dict = manager.dict()
         jobs = []
         for params in params_list:
-            strategy = MACross()
+            strategy = DualThrust()
             strategy.set_capital(init_capital)
             strategy.set_symbols([symbol])
             backtest_engine = qt.BacktestEngine(test_start_date, test_end_date)
             backtest_engine.set_capital(init_capital)  # capital or portfolio >= capital for one strategy
             backtest_engine.add_data(symbol, data)
-            strategy.set_params({'lookback': params['lookback']})
+            strategy.set_params({'n': params['n'], 'k1': params['k1'], 'k2': params['k2']})
             backtest_engine.set_strategy(strategy)
-            tag = (params['lookback'])
+            tag = (params['n'], params['k1'], params['k2'])
             p = multiprocessing.Process(target=parameter_search, args=(backtest_engine, tag, target_name, return_dict))
             jobs.append(p)
             p.start()
@@ -108,10 +130,10 @@ if __name__ == '__main__':
         for k,v in return_dict.items():
             print(k, v)
     else:
-        strategy = MACross()
+        strategy = DualThrust()
         strategy.set_capital(init_capital)
         strategy.set_symbols([symbol])
-        strategy.set_params({'lookback':20})
+        strategy.set_params({'n':4, 'k1': 0.5, 'k2': 0.5})
 
         # Create a Data Feed
         backtest_engine = qt.BacktestEngine(test_start_date, test_end_date)

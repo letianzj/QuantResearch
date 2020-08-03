@@ -1,13 +1,14 @@
-"""
-Buy/sell when price crosses above/below SMA;
-Close position when price crosses below/above SMA;
-"""
+'''
+classical Bollinger Bands. Buy when price back up from lower bands; sell when middle is hit
+Sell when price back down from upper bands; buy back when middle is hit
+'''
 import os
 import numpy as np
 import pandas as pd
 import pytz
 from datetime import datetime, timezone
 import multiprocessing
+import talib
 import quanttrading2 as qt
 import matplotlib.pyplot as plt
 import empyrical as ep
@@ -17,14 +18,14 @@ from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
 
-class MACross(qt.StrategyBase):
+class BollingerBands(qt.StrategyBase):
     def __init__(self,
-            lookback=20
+            n=20, ndev=2.0
     ):
-        super(MACross, self).__init__()
-        self.lookback = lookback
+        super(BollingerBands, self).__init__()
+        self.n = n
+        self.ndev = ndev
         self.current_time = None
-        self.current_position = 0
 
     def on_tick(self, tick_event):
         self.current_time = tick_event.timestamp
@@ -32,27 +33,38 @@ class MACross(qt.StrategyBase):
         symbol = self.symbols[0]
 
         df_hist = self._data_board.get_hist_price(symbol, tick_event.timestamp)
-        current_price = df_hist.iloc[-1].Close
 
         # wait for enough bars
-        if df_hist.shape[0] > self.lookback:
+        if df_hist.shape[0] < self.n:
             return
 
-        # Calculate the simple moving averages
-        sma = np.mean(df_hist['Close'][-self.lookback:])
-        # Trading signals based on moving average cross
-        if current_price > sma and self.current_position <= 0:
-            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
-            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
-            print("Long: %s, sma %s, price %s, trade %s, new position %s" % (self.current_time, str(sma), str(current_price), str(target_size-self.current_position), str(target_size)))
-            self.current_position = target_size
-        elif current_price < sma and self.current_position >= 0:
-            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
-            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
-            print("Short: %s, sma %s, price %s, trade %s, new position %s" % (self.current_time, str(sma), str(current_price), str(target_size-self.current_position), str(target_size)))
-            self.current_position = target_size
+        current_price = df_hist.iloc[-1].Close
+        prev_price = df_hist.iloc[-2].Close
+        current_size = self._position_manager.get_position_size(symbol)
+        npv = self._position_manager.current_total_capital
+        ub, mb, lb = talib.BBANDS(df_hist['Close'], timeperiod=self.n, nbdevup=self.ndev, nbdevdn=self.ndev, matype=0)
+        # open long position; price backs up from below lower band
+        if current_size <= 0 and current_price > lb[-1] and prev_price < lb[-2]:
+            target_size = (int)(npv / current_price)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            print(f'{self.current_time}, BUY ORDER SENT, {symbol}, Pre-Price: {prev_price:.2f}, '
+                  f'Price: {current_price:.2f}, Pre-LB: {lb[-2]:.2f}, LB: {lb[-1]}, Size: {target_size}')
+        # open short position; price backs down from above upper band
+        elif current_size >= 0 and current_price < ub[-1] and prev_price > ub[-2]:
+            target_size = -(int)(npv / current_price)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            print(f'{self.current_time}, SELL ORDER SENT, {symbol}, Pre-Price: {prev_price:.2f}, '
+                  f'Price: {current_price:.2f}, Pre-UB: {ub[-2]:.2f}, UB: {ub[-1]}, Size: {target_size}')
+        # close short position
+        elif current_price < mb[-1] and current_size < 0:
+            target_size = 0
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            print(f'{self.current_time}, CLOSE SHORT ORDER SENT, {symbol}, Price: {current_price:.2f}, MB: {mb[-1]}, Size: {target_size}')
+        # close long position
+        elif current_price > mb[-1] and current_size > 0:
+            target_size = 0
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            print(f'{self.current_time}, CLOSE LONG ORDER SENT, {symbol}, Price: {current_price:.2f}, MB: {mb[-1]}, Size: {target_size}')
 
 
 def parameter_search(engine, tag, target_name, return_dict):
@@ -83,22 +95,23 @@ if __name__ == '__main__':
 
     if do_optimize:          # parallel parameter search
         params_list = []
-        for lk in [10, 20, 30, 50, 100, 200]:
-            params_list.append({'lookback': lk})
+        for n_ in [10, 20, 30, 50, 100]:
+            for nd_ in [1.0, 1.5, 2.0, 2.5]:
+                params_list.append({'n': n_, 'ndev': nd_})
         target_name = 'Sharpe ratio'
         manager = multiprocessing.Manager()
         return_dict = manager.dict()
         jobs = []
         for params in params_list:
-            strategy = MACross()
+            strategy = BollingerBands()
             strategy.set_capital(init_capital)
             strategy.set_symbols([symbol])
             backtest_engine = qt.BacktestEngine(test_start_date, test_end_date)
             backtest_engine.set_capital(init_capital)  # capital or portfolio >= capital for one strategy
             backtest_engine.add_data(symbol, data)
-            strategy.set_params({'lookback': params['lookback']})
+            strategy.set_params({'n': params['n'], 'ndev': params['ndev']})
             backtest_engine.set_strategy(strategy)
-            tag = (params['lookback'])
+            tag = (params['n'], params['ndev'])
             p = multiprocessing.Process(target=parameter_search, args=(backtest_engine, tag, target_name, return_dict))
             jobs.append(p)
             p.start()
@@ -108,10 +121,10 @@ if __name__ == '__main__':
         for k,v in return_dict.items():
             print(k, v)
     else:
-        strategy = MACross()
+        strategy = BollingerBands()
         strategy.set_capital(init_capital)
         strategy.set_symbols([symbol])
-        strategy.set_params({'lookback':20})
+        strategy.set_params({'n':20, 'ndev':2.0})
 
         # Create a Data Feed
         backtest_engine = qt.BacktestEngine(test_start_date, test_end_date)
