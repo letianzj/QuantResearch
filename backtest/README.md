@@ -18,8 +18,8 @@ Test against daily bars between 2010 and 2019. It may not be fair to some intrad
 |5 |  [Dual Thrust](./dual_thrust.py)    | -0.10|
 |6 |  [Ghost Trader](./ghost_trader.py)    | -0.14|
 |7 |  [R-Breaker](./r_breaker.py)    | 0.15|
-|8 |  [dynamic breakout ii](./dynamic_breakout_ii.py)    | -0.28|
-|9 |  [Turtle](./turtle.py)    |0.30 |
+|8 |  [dynamic breakout ii](./dynamic_breakout_ii.py)    | 0.51|
+|9 |  [Turtle](./turtle.py)    |0.15 |
 |10 |  [Mebane Faber TAA](./mebane_faber_taa.py)    | 0.40|
 |11 |  [MinVar, MaxSharpe, MaxDiversified, RiskParity](./portfolio_optimization.py)    | 0.93, 0.37, 0.71, 0.66|
 
