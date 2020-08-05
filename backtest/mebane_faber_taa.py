@@ -89,20 +89,19 @@ if __name__ == '__main__':
     # ------------------------- Evaluation and Plotting -------------------------------------- #
     strat_ret = ds_equity.pct_change().dropna()
     strat_ret.name = 'strat'
-    bm_ret = None
-    if benchmark:
-        bm = qt.util.read_ohlcv_csv(os.path.join('../data/', f'{benchmark}.csv'))
-        bm_ret = bm['Close'].pct_change().dropna()
-        bm_ret.index = pd.to_datetime(bm_ret.index)
-        bm_ret = bm_ret[strat_ret.index]
-        bm_ret.name = 'benchmark'
+
+    bm = qt.util.read_ohlcv_csv(os.path.join('../data/', f'{benchmark}.csv'))
+    bm_ret = bm['Close'].pct_change().dropna()
+    bm_ret.index = pd.to_datetime(bm_ret.index)
+    bm_ret = bm_ret[strat_ret.index]
+    bm_ret.name = 'benchmark'
 
     perf_stats_strat = pf.timeseries.perf_stats(strat_ret)
     perf_stats_all = perf_stats_strat
-    if benchmark:
-        perf_stats_bm = pf.timeseries.perf_stats(bm_ret)
-        perf_stats_all = pd.concat([perf_stats_strat, perf_stats_bm], axis=1)
-        perf_stats_all.columns = ['Strategy', 'Benchmark']
+
+    perf_stats_bm = pf.timeseries.perf_stats(bm_ret)
+    perf_stats_all = pd.concat([perf_stats_strat, perf_stats_bm], axis=1)
+    perf_stats_all.columns = ['Strategy', 'Benchmark']
 
     drawdown_table = pf.timeseries.gen_drawdown_table(strat_ret, 5)
     monthly_ret_table = ep.aggregate_returns(strat_ret, 'monthly')
