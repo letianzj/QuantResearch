@@ -77,7 +77,7 @@ class GhostTrader(qt.StrategyBase):
             if self.long_ghost_virtual == True and self.long_ghost_virtual_price > df_hist['Close'].iloc[-1]:
                 self.long_ghost_virtual = False
                 target_size = (int)(npv / current_price)
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print('BUY ORDER SENT, Pre-Price: %.2f, Price: %.2f, ghost price %.2f, Size: %.2f' %
                          (df_hist['Close'].iloc[-2],
                           df_hist['Close'].iloc[-1],
@@ -86,7 +86,7 @@ class GhostTrader(qt.StrategyBase):
         # close long if below Donchian lower band
         elif current_size > 0 and df_hist['Close'].iloc[-1] <= long_stop:
             target_size = 0
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print('CLOSE LONG ORDER SENT, Pre-Price: %.2f, Price: %.2f, Low: %.2f, Stop: %.2f, Size: %.2f' %
                      (df_hist['Close'].iloc[-2],
                       df_hist['Close'].iloc[-1],
@@ -109,7 +109,7 @@ class GhostTrader(qt.StrategyBase):
             if self.short_ghost_virtual == True and self.short_ghost_virtual_price < df_hist['Close'].iloc[-1]:
                 self.short_ghost_virtual = False
                 target_size = -(int)(npv / current_price)
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print('SELL ORDER SENT, Pre-Price: %.2f, Price: %.2f, ghost price %.2f, Size: %.2f' %
                          (df_hist['Close'].iloc[-2],
                           df_hist['Close'].iloc[-1],
@@ -118,7 +118,7 @@ class GhostTrader(qt.StrategyBase):
         # close short if above Donchian upper band
         elif current_size < 0 and df_hist['High'].iloc[-1] >= short_stop:
             target_size = 0
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print('CLOSE SHORT ORDER SENT, Pre-Price: %.2f, Price: %.2f, Low: %.2f, Stop: %.2f, Size: %.2f' %
                      (df_hist['Close'].iloc[-2],
                       df_hist['Close'].iloc[-1],
@@ -143,7 +143,7 @@ def parameter_search(engine, tag, target_name, return_dict):
 
 
 if __name__ == '__main__':
-    do_optimize = True
+    do_optimize = False
     run_in_jupyter = False
     symbol = 'SPX'
     benchmark = 'SPX'

@@ -79,21 +79,21 @@ class RBreaker(qt.StrategyBase):
         if current_size == 0:       # If no position
             if current_price > r3:          # If the current price breaks through resistance level 3/highest, go long
                 target_size = int(npv / current_price)
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'BUY ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
             if current_price < s3:  # If the current price break-through support level 3/lowest, go short
                 target_size = -int(npv / current_price)
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'SELL ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
         elif current_size  > 0:
             if (today_high > r2 and current_price < r1) or current_price < s3:  # price reverses. flip from long to short
                 target_size = -int(npv / current_price)
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'FLIP TO SHORT ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
         elif current_size  < 0:
             if (today_low < s2 and current_price > s1) or current_price > r3:   # price reverses, flip from short to long
                 target_size = int(npv / current_price * 0.95)
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'FLIP TO LONG ORDER SENT, price: {current_price:.2f}, r1 {r1:.2f}, r2 {r2:.2f} r3 {r3:.2f}, s1 {s1:.2f}  s2 {s2:.2f}, s3 {s3:.2f} size: {target_size}')
 
 

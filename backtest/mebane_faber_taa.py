@@ -51,12 +51,12 @@ class MebaneFaberTAA(qt.StrategyBase):
             ma_slow = np.mean(self._data_board.get_hist_price(symbol, self.current_time)['Close'][-self.nslow:])
             if ma_fast > ma_slow:       # buy
                 target_size = (int)(stock_value / current_price)
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'{self.current_time}, LONG ORDER SENT, {symbol}, Price: {current_price:.2f}, '
                       f'fast sma: {ma_fast:.2f}, slow sma: {ma_slow:.2f}, Size: {target_size}')
             else:  # hold cash
                 target_size = 0
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'{self.current_time}, FLAT ORDER SENT, {symbol}, Price: {current_price:.2f}, '
                       f'fast sma: {ma_fast:.2f}, slow sma: {ma_slow:.2f}, Size: {target_size}')
 

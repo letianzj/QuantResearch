@@ -61,21 +61,21 @@ class DynamicBreakoutII(qt.StrategyBase):
         if current_size == 0:
             target_size = int(npv/ current_price)
             if current_price > ub:  # and current_price > hh:
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'LONG ORDER SENT, price: {current_price:.2f}, ub: {ub:.2f}, hh: {hh:.2f}, size: {target_size}')
             elif current_price < lb:  # and current_price < ll:
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'SHORT ORDER SENT, price: {current_price:.2f}, lb: {lb:.2f}, ll: {ll:.2f}, size: {-target_size}')
         # exit long if price < MA; exit short if price > MA
         elif current_size > 0:
             if current_price < ma:
                 target_size = 0
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'FLAT LONG ORDER SENT, price: {current_price:.2f}, ma: {ma:.2f}, size: {-current_size}')
         else:
             if current_price > ma:
                 target_size = 0
-                self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+                self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
                 print(f'FLAT SHORT ORDER SENT, price: {current_price:.2f}, ma: {ma:.2f}, size: {-current_size}')
 
 

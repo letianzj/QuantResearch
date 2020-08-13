@@ -66,26 +66,26 @@ class Turtle(qt.StrategyBase):
         if current_price > don_high and self.buy_count == 0:
             # one unit is 1% of total risk asset
             target_size = int(npv * 0.01 / ATR)
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print(f'LONG ORDER SENT, price: {current_price:.2f}, don_high: {don_high:.2f}')
             self.buy_count = 1
         # add; This is for futures; may go beyond notional; leverage is set to 4
         elif current_price > self.buyprice + 0.5 * ATR and self.buy_count > 0 and self.buy_count <= 3:
             target_size = int(npv * 0.01 / ATR)
             target_size += current_size        # on top of current size
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print(f'ADD LONG ORDER SENT, add time: {self.buy_count}, price: {current_price:.2f}, don_high: {don_high:.2f}')
             self.buy_count += 1
         # flat
         elif current_price < don_low and self.buy_count > 0:
             target_size = 0
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print(f'FLAT ORDER SENT, price: {current_price:.2f}, don_low: {don_low:.2f}')
             self.buy_count = 0
         # flat, stop loss
         elif current_price < (self.buyprice - 2 * ATR) and self.buy_count > 0:
             target_size = 0
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print(f'FLAT ORDER SENT, price: {current_price:.2f}, {self.buyprice:.2f}, 2ATR: {2 * ATR:.2f}')
             self.buy_count = 0
 

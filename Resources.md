@@ -8,7 +8,10 @@
 
 ## Websites
 
+
+
 ## Blogs
+
 
 * [Quantocracy](https://quantocracy.com/) - blog aggregator
 
@@ -20,6 +23,16 @@
 
 * [PyQuant News](http://pyquantnews.com/) - resources and news
 
+* [https://asmquantmacro.com/](https://asmquantmacro.com/)
+
+* [https://cssanalytics.wordpress.com/](https://cssanalytics.wordpress.com/)
+
+* [https://quantoisseur.com/](https://quantoisseur.com/)
+
+* [https://systematicedge.wordpress.com/](https://systematicedge.wordpress.com/)
+
+* [https://systematicinvestor.wordpress.com/](https://systematicinvestor.wordpress.com/)
+
 
 ## Projects
 
@@ -27,7 +40,7 @@
 
 * [machine-learning-asset-management](https://github.com/firmai/machine-learning-asset-management)
 
-* [research](https://github.com/hudson-and-thames/research) - financial machine learning from [Hudson and Thames](https://hudsonthames.org/blog/)
+* [research](https://github.com/hudson-and-thames/mlfinlab) - financial machine learning from [Hudson and Thames](https://mlfinlab.readthedocs.io/en/latest/index.html), [blog](https://hudsonthames.org/blog/)
 
 * [awesome-quant](https://github.com/wilsonfreitas/awesome-quant) - Awesome quant is another curated list of quant 
 
@@ -37,7 +50,10 @@
 
 * [awesome-ai-in-finance](https://github.com/georgezouq/awesome-ai-in-finance) - Machine learning strategies and useful tools use in financial market
 
+
 ## Books
+
+* [Machine Learning for Algorithmic Trading 2nd Edition](https://www.amazon.com/Machine-Learning-Algorithmic-Trading-alternative-ebook/dp/B08D9SP6MB/ref=tmm_kin_swatch_0?_encoding=UTF8&qid=&sr=) - more pertinent to trading than the first edition
 
 ## Papers
 
@@ -131,6 +147,8 @@ fixed and used to train the system for the next day prediction on a rolling basi
 
 * [Almahdi, Saud, and Steve Y. Yang. "An adaptive portfolio trading system: A risk-return portfolio optimization using recurrent reinforcement learning with expected maximum drawdown." Expert Systems with Applications 87 (2017): 267-279.](https://www.sciencedirect.com/science/article/abs/pii/S0957417417304402)
 
+* [Heaton, James B., Nick G. Polson, and Jan Hendrik Witte. "Deep learning for finance: deep portfolios." Applied Stochastic Models in Business and Industry 33.1 (2017): 3-12](https://onlinelibrary.wiley.com/doi/abs/10.1002/asmb.2209)
+
 * [Jiang, Zhengyao, and Jinjun Liang. "Cryptocurrency portfolio management with deep reinforcement learning." 2017 Intelligent Systems Conference (IntelliSys). IEEE, 2017.](https://arxiv.org/abs/1706.10059)
 
 * [Jiang, Zhengyao, Dixing Xu, and Jinjun Liang. "A deep reinforcement learning framework for the financial portfolio management problem." arXiv preprint arXiv:1706.10059 (2017).](https://arxiv.org/abs/1706.10059)
@@ -147,6 +165,8 @@ fixed and used to train the system for the next day prediction on a rolling basi
 * [Carapuço, João, Rui Neves, and Nuno Horta. "Reinforcement learning applied to Forex trading." Applied Soft Computing 73 (2018): 783-794.](https://www.sciencedirect.com/science/article/abs/pii/S1568494618305349)
 
 * [Fischer, Thomas G. Reinforcement learning in financial markets-a survey. No. 12/2018. FAU Discussion Papers in Economics, 2018.](https://www.econstor.eu/bitstream/10419/183139/1/1032172355.pdf) - survey
+
+* [Gu, Shihao, Bryan Kelly, and Dacheng Xiu. Empirical asset pricing via machine learning. No. w25398. National Bureau of Economic Research, 2018.](https://www.nber.org/papers/w25398)
 
 * [Huang, Chien Yi. "Financial trading as a game: A deep reinforcement learning approach." arXiv preprint arXiv:1807.02787 (2018).](https://arxiv.org/abs/1807.02787)
 
@@ -185,5 +205,10 @@ fixed and used to train the system for the next day prediction on a rolling basi
 
 ### 2020
 
+* [Gu, Shihao, Bryan Kelly, and Dacheng Xiu. "Autoencoder asset pricing models." Journal of Econometrics (2020).](https://www.sciencedirect.com/science/article/abs/pii/S0304407620301998)
+
 * [Kaur, Simerjot. "Algorithmic Trading using Sentiment Analysis and Reinforcement Learning."](https://pdfs.semanticscholar.org/3ed5/3a69019089c467289f5e43486785a8fcd856.pdf)
+
+* [Ozbayoglu, Ahmet Murat, Mehmet Ugur Gudelek, and Omer Berat Sezer. "Deep learning for financial applications: A survey." Applied Soft Computing (2020): 106384.](https://arxiv.org/pdf/2002.05786.pdf) - survey
+
 

@@ -43,15 +43,13 @@ class MADoubleCross(qt.StrategyBase):
         long_sma = np.mean(df_hist['Close'][-self.long_window:])
         # Trading signals based on moving average cross
         if short_sma > long_sma and self.current_position <= 0:
-            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
-            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
+            target_size = int((self._position_manager.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
+            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size, timestamp=self.current_time)
             print("Long: %s, short_sma %s, long_sma %s, price %s, trade %s, new position %s" % (self.current_time, str(short_sma), str(long_sma), str(current_price), str(target_size-self.current_position), str(target_size)))
             self.current_position = target_size
         elif short_sma < long_sma and self.current_position >= 0:
-            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
-            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
+            target_size = int((self._position_manager.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
+            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size, timestamp=self.current_time)
             print("Short: %s, short_sma %s, long_sma %s, price %s, trade %s, new position %s" % (self.current_time, str(short_sma), str(long_sma), str(current_price), str(target_size-self.current_position), str(target_size)))
             self.current_position = target_size
 

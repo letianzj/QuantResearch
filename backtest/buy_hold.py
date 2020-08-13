@@ -31,8 +31,8 @@ class BuyAndHoldStrategy(qt.StrategyBase):
         if not self.invested:
             df_hist = self._data_board.get_hist_price(symbol, event.timestamp)
             close = df_hist.iloc[-1].Close
-            target_size = int(self.cash / close)
-            self.adjust_position(symbol, size_from=0, size_to=target_size)
+            target_size = int(self._position_manager.cash / close)
+            self.adjust_position(symbol, size_from=0, size_to=target_size, timestamp=event.timestamp)
             self.invested = True
 
 

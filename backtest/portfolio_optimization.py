@@ -131,7 +131,7 @@ class PortfolioOptimization(qt.StrategyBase):
             current_size = self._position_manager.get_position_size(sym)
             current_price = self._data_board.get_hist_price(sym, self.current_time)['Close'].iloc[-1]
             target_size = (int)(npv * w[i] / current_price)
-            self.adjust_position(sym, size_from=current_size, size_to=target_size)
+            self.adjust_position(sym, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print('REBALANCE ORDER SENT, %s, Price: %.2f, Percentage: %.2f, Target Size: %.2f' %
                          (sym,
                           current_price,

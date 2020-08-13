@@ -35,22 +35,20 @@ class MACross(qt.StrategyBase):
         current_price = df_hist.iloc[-1].Close
 
         # wait for enough bars
-        if df_hist.shape[0] > self.lookback:
+        if df_hist.shape[0] < self.lookback:
             return
 
         # Calculate the simple moving averages
         sma = np.mean(df_hist['Close'][-self.lookback:])
         # Trading signals based on moving average cross
         if current_price > sma and self.current_position <= 0:
-            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
-            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
+            target_size = int((self._position_manager.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])       # buy to notional
+            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size, timestamp=self.current_time)
             print("Long: %s, sma %s, price %s, trade %s, new position %s" % (self.current_time, str(sma), str(current_price), str(target_size-self.current_position), str(target_size)))
             self.current_position = target_size
         elif current_price < sma and self.current_position >= 0:
-            target_size = int((self.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
-            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size)
-            self.cash -= (target_size-self.current_position) * df_hist['Close'].iloc[-1]
+            target_size = int((self._position_manager.cash + self.current_position * df_hist['Close'].iloc[-1])/df_hist['Close'].iloc[-1])*(-1)    # sell to notional
+            self.adjust_position(symbol, size_from=self.current_position, size_to=target_size, timestamp=self.current_time)
             print("Short: %s, sma %s, price %s, trade %s, new position %s" % (self.current_time, str(sma), str(current_price), str(target_size-self.current_position), str(target_size)))
             self.current_position = target_size
 
@@ -71,7 +69,7 @@ def parameter_search(engine, tag, target_name, return_dict):
 
 
 if __name__ == '__main__':
-    do_optimize = True
+    do_optimize = False
     run_in_jupyter = False
     symbol = 'SPX'
     benchmark = 'SPX'

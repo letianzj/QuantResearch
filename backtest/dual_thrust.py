@@ -64,14 +64,14 @@ class DualThrust(qt.StrategyBase):
             if current_size > 0:
                 return
             target_size = int(npv / current_price)
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print(f'{self.current_time}, BUY ORDER SENT, {symbol}, Price: {current_price:.2f}, '
                   f'Buy trigger: {buytrig:.2f}, Size: {current_size},  Target Size: {target_size}')
         elif current_price < selltrig:   # sell on down break
             if current_size < 0:
                 return
             target_size = -int(npv / current_price)
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
             print(f'{self.current_time}, SELL ORDER SENT, {symbol}, Price: {current_price:.2f}, '
                   f'Sell trigger: {selltrig:.2f}, Size: {current_size},  Target Size: {target_size}')
 

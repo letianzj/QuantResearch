@@ -28,6 +28,7 @@ class BollingerBands(qt.StrategyBase):
         self.current_time = None
 
     def on_tick(self, tick_event):
+        super().on_tick(tick_event)
         self.current_time = tick_event.timestamp
         # print('Processing {}'.format(self.current_time))
         symbol = self.symbols[0]
@@ -46,25 +47,27 @@ class BollingerBands(qt.StrategyBase):
         # open long position; price backs up from below lower band
         if current_size <= 0 and current_price > lb[-1] and prev_price < lb[-2]:
             target_size = (int)(npv / current_price)
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
-            print(f'{self.current_time}, BUY ORDER SENT, {symbol}, Pre-Price: {prev_price:.2f}, '
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
+            print(f'{self.current_time}, npv {npv}, BUY ORDER SENT, {symbol}, Pre-Price: {prev_price:.2f}, '
                   f'Price: {current_price:.2f}, Pre-LB: {lb[-2]:.2f}, LB: {lb[-1]}, Size: {target_size}')
         # open short position; price backs down from above upper band
         elif current_size >= 0 and current_price < ub[-1] and prev_price > ub[-2]:
             target_size = -(int)(npv / current_price)
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
-            print(f'{self.current_time}, SELL ORDER SENT, {symbol}, Pre-Price: {prev_price:.2f}, '
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
+            print(f'{self.current_time}, npv {npv}, SELL ORDER SENT, {symbol}, Pre-Price: {prev_price:.2f}, '
                   f'Price: {current_price:.2f}, Pre-UB: {ub[-2]:.2f}, UB: {ub[-1]}, Size: {target_size}')
         # close short position
         elif current_price < mb[-1] and current_size < 0:
             target_size = 0
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
-            print(f'{self.current_time}, CLOSE SHORT ORDER SENT, {symbol}, Price: {current_price:.2f}, MB: {mb[-1]}, Size: {target_size}')
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
+            print(f'{self.current_time}, npv {npv}, CLOSE SHORT ORDER SENT, {symbol}, Price: {current_price:.2f}, MB: {mb[-1]}, Size: {target_size}')
         # close long position
         elif current_price > mb[-1] and current_size > 0:
             target_size = 0
-            self.adjust_position(symbol, size_from=current_size, size_to=target_size)
-            print(f'{self.current_time}, CLOSE LONG ORDER SENT, {symbol}, Price: {current_price:.2f}, MB: {mb[-1]}, Size: {target_size}')
+            self.adjust_position(symbol, size_from=current_size, size_to=target_size, timestamp=self.current_time)
+            print(f'{self.current_time}, npv {npv}, CLOSE LONG ORDER SENT, {symbol}, Price: {current_price:.2f}, MB: {mb[-1]}, Size: {target_size}')
+        else:
+            print(f'{self.current_time}, npv {npv}')
 
 
 def parameter_search(engine, tag, target_name, return_dict):
@@ -83,7 +86,7 @@ def parameter_search(engine, tag, target_name, return_dict):
 
 
 if __name__ == '__main__':
-    do_optimize = True
+    do_optimize = False
     run_in_jupyter = False
     symbol = 'SPX'
     benchmark = 'SPX'
