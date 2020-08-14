@@ -29,6 +29,7 @@
 |18 |  [Gaussian Mixture and Markov Switching](./notebooks/gaussian_mixture_markov_switching.ipynb)    |[link](https://letianzj.github.io/gaussian-mixture-markov-regime-switching.html)|
 |19 |  [Portfolio Optimization Two](./backtest/portfolio_optimization.py)    |[link](https://letianzj.github.io/portfolio-management-two.html)|
 |20 |  [Volume Factor Evaluation Alphalens](./notebooks/volume_factor_alphalens.ipynb)    |&nbsp;|
+|21 |  [Reinforcement Backtest](./backtest/trading_env.py)    |&nbsp;|
 
 ```python
 

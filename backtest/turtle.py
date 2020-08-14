@@ -37,6 +37,7 @@ class Turtle(qt.StrategyBase):
         self.current_time = None
 
     def on_fill(self, fill_event):
+        super().on_fill(fill_event)
         if fill_event.fill_size > 0:         # buy
             self.buyprice = fill_event.fill_price
 

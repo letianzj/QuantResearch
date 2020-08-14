@@ -53,7 +53,18 @@
 
 ## Books
 
-* [Machine Learning for Algorithmic Trading 2nd Edition](https://www.amazon.com/Machine-Learning-Algorithmic-Trading-alternative-ebook/dp/B08D9SP6MB/ref=tmm_kin_swatch_0?_encoding=UTF8&qid=&sr=) - more pertinent to trading than the first edition
+* [Algorithmic Trading: Winning Strategies and Their Rationale, 2013](https://www.amazon.com/Algorithmic-Trading-Winning-Strategies-Rationale/dp/1118460146)
+
+* [Machine Learning for Finance: Principles and practice for financial insiders, 2019](https://www.amazon.com/Machine-Learning-Finance-algorithms-financial/dp/1789136369)
+
+* [Trading Evolved: Anyone can Build Killer Trading Strategies in Python, 2019](https://www.amazon.com/Trading-Evolved-Anyone-Killer-Strategies/dp/109198378X/ref=sr_1_2?crid=JBIOHZL44WXN&dchild=1) - author of Following the Trend
+
+* [Artificial Intelligence in Finance: A Python-Based Guide, 2020](https://www.amazon.com/Artificial-Intelligence-Finance-Python-Based-Guide/dp/1492055433/ref=sr_1_3) - to be published
+
+* [Machine Learning for Algorithmic Trading 2nd Edition, 2020](https://www.amazon.com/Machine-Learning-Algorithmic-Trading-alternative-ebook/dp/B08D9SP6MB/ref=tmm_kin_swatch_0?_encoding=UTF8&qid=&sr=) - more pertinent to trading than the first edition
+
+* [Machine Learning in Finance: From Theory to Practice, 2020](https://www.amazon.com/Machine-Learning-Finance-Theory-Practice-ebook-dp-B08C4WLYM2/dp/B08C4WLYM2/ref=mt_other?_encoding=UTF8&me=&qid=)
+
 
 ## Papers
 
