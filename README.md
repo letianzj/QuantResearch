@@ -30,7 +30,7 @@
 |19 |  [Portfolio Optimization Two](./backtest/portfolio_optimization.py)    |[link](https://letianzj.github.io/portfolio-management-two.html)|
 |20 |  [Volume Factor Evaluation Alphalens](./notebooks/volume_factor_alphalens.ipynb)    |&nbsp;|
 |21 |  [Reinforcement Backtest](./backtest/trading_env.py)    |&nbsp;|
-|21 |  [Reinforcement Option Pricing](./ml/american_option.ipynb)    |&nbsp;|
+|22 |  [Reinforcement Option Pricing](./ml/american_option.ipynb)    |&nbsp;|
 
 ```python
 
