@@ -9,6 +9,7 @@
 |5 |  [DQN](./dqn.ipynb)    |
 |7 |  [PPO](./ppo.ipynb)    |
 |6 |  [Arctor-Critic A3C](./a3c.ipynb)    |
+|7 |  [Option Pricing](./american_option.ipynb)    |
 
 ```python
 
