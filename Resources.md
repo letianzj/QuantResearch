@@ -27,6 +27,8 @@
 
 * [https://cssanalytics.wordpress.com/](https://cssanalytics.wordpress.com/)
 
+* [https://qoppac.blogspot.com/](https://qoppac.blogspot.com/)
+
 * [https://quantoisseur.com/](https://quantoisseur.com/)
 
 * [https://systematicedge.wordpress.com/](https://systematicedge.wordpress.com/)

@@ -31,7 +31,7 @@
 |20 |  [Volume Factor Evaluation Alphalens](./notebooks/volume_factor_alphalens.ipynb)    |&nbsp;|
 |21 |  [Reinforcement Backtest](./backtest/trading_env.py)    |&nbsp;|
 |22 |  [Reinforcement Option Pricing](./ml/american_option.ipynb)    |[link](https://medium.com/@letian.zj/option-pricing-using-reinforcement-learning-ad2ddca7735b)|
-|23 |  [Irregular Interval EMA](https://github.com/letianzj/quanttrading2/blob/master/examples/moving_average_cross_strategy.py)    |[link](https://letianzj.github.io/exponential-moving-average.html)|
+|23 |  [Irregular Interval EMA](https://github.com/letianzj/quanttrading2/blob/master/examples/strategy/moving_average_cross_strategy.py)    |[link](https://letianzj.github.io/exponential-moving-average.html)|
 
 ```python
 
