@@ -11,7 +11,22 @@ import multiprocessing
 import quanttrading2 as qt
 import matplotlib.pyplot as plt
 import empyrical as ep
+"""
+To use pyfolio 0.9.2
+1. line 893 in pyfolio/timeseries.py from: valley = np.argmin(underwater)  # end of the period to valley = underwater.idxmin()   # end of the period
+2. line 133 and 137 in pyfolio/round_trips.py: groupby uses list not tuple. ['block_dir', 'block_time']
+3. line 77 in pyfolio/roud_trips.py: doesn't support agg(stats_dict) and rename_axis ==> rename
+        ss = round_trips.assign(ones=1).groupby('ones')[col].agg(list(stats_dict.values()))
+        ss.columns = list(stats_dict.keys())
+        stats_all = (ss.T.rename({1.0: 'All trades'}, axis='columns'))
+4. line 385, same for RETURN_STATS as in 3
+5. utils print_table, add print(table) to use outside jupyter
+6. line 840 in tears.py, add
+        positions_bod = positions.sum(axis='columns') / (1 + returns)
+        positions_bod.index = positions_bod.index.to_series().apply(lambda x: x.replace(hour=0, minute=0, second=0))
+"""
 import pyfolio as pf
+import pickle
 # set browser full width
 from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
@@ -71,13 +86,27 @@ def parameter_search(engine, tag, target_name, return_dict):
 if __name__ == '__main__':
     do_optimize = False
     run_in_jupyter = False
+    is_intraday = True
     symbol = 'SPX'
     benchmark = 'SPX'
-    datapath = os.path.join('../data/', f'{symbol}.csv')
-    data = qt.util.read_ohlcv_csv(datapath)
     init_capital = 100_000.0
-    test_start_date = datetime(2010,1,1, 8, 30, 0, 0, pytz.timezone('America/New_York'))
-    test_end_date = datetime(2019,12,31, 6, 0, 0, 0, pytz.timezone('America/New_York'))
+
+    if not is_intraday:
+        test_start_date = datetime(2010, 1, 1, 8, 30, 0, 0, pytz.timezone('America/New_York'))
+        test_end_date = datetime(2019, 12, 31, 6, 0, 0, 0, pytz.timezone('America/New_York'))
+        datapath = os.path.join('../data/', f'{symbol}.csv')
+        data = qt.util.read_ohlcv_csv(datapath)
+    else:
+        # it seems initialize timezone doesn't work
+        eastern = pytz.timezone('US/Eastern')
+        test_start_date = eastern.localize(datetime(2020, 8, 10, 9, 30, 0))
+        test_end_date = eastern.localize(datetime(2020, 8, 10, 10, 0, 0))
+        dict_hist_data = {}
+        if os.path.isfile('../data/tick/20200810.pkl'):
+            with open('../data/tick/20200810.pkl', 'rb') as f:
+                dict_hist_data = pickle.load(f)
+        data = dict_hist_data['ESU0 FUT GLOBEX']
+        data.index = data.index.tz_localize('America/New_York')  # US/Eastern, UTC
 
     if do_optimize:          # parallel parameter search
         params_list = []
@@ -123,7 +152,10 @@ if __name__ == '__main__':
         # ------------------------- Evaluation and Plotting -------------------------------------- #
         strat_ret = ds_equity.pct_change().dropna()
         strat_ret.name = 'strat'
-        bm = qt.util.read_ohlcv_csv(os.path.join('../data/', f'{benchmark}.csv'))
+        if not is_intraday:
+            bm = qt.util.read_ohlcv_csv(os.path.join('../data/', f'{benchmark}.csv'))
+        else:
+            bm = data      # buy and hold
         bm_ret = bm['Close'].pct_change().dropna()
         bm_ret.index = pd.to_datetime(bm_ret.index)
         bm_ret = bm_ret[strat_ret.index]

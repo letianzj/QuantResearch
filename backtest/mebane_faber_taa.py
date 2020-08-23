@@ -118,20 +118,6 @@ if __name__ == '__main__':
     print('-------------- ANNUAL RETURN ----------------')
     print(ann_ret_df)
 
-    """
-    To use pyfolio
-    1. line 893 in pyfolio/timeseries.py from: valley = np.argmin(underwater)  # end of the period to valley = underwater.idxmin()   # end of the period
-    2. line 133 and 137 in pyfolio/round_trips.py: groupby uses list not tuple. ['block_dir', 'block_time']
-    3. line 77 in pyfolio/roud_trips.py: doesn't support agg(stats_dict) and rename_axis ==> rename
-            ss = round_trips.assign(ones=1).groupby('ones')[col].agg(list(stats_dict.values()))
-            ss.columns = list(stats_dict.keys())
-            stats_all = (ss.T.rename({1.0: 'All trades'}, axis='columns'))
-    4. line 385, same for RETURN_STATS    
-    5. utils print_table, add print(table) to use outside jupyter
-    6. line 840 in tears.py, add
-            positions_bod = positions.sum(axis='columns') / (1 + returns)
-            positions_bod.index = positions_bod.index.to_series().apply(lambda x: x.replace(hour=0, minute=0, second=0))
-    """
     pf.create_full_tear_sheet(
         strat_ret,
         benchmark_rets=bm_ret if benchmark else None,

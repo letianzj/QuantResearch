@@ -11,6 +11,7 @@ import quanttrading2 as qt
 import matplotlib.pyplot as plt
 import empyrical as ep
 import pyfolio as pf
+import pickle
 # set browser full width
 from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
@@ -72,13 +73,27 @@ def parameter_search(engine, tag, target_name, return_dict):
 if __name__ == '__main__':
     do_optimize = False
     run_in_jupyter = False
+    is_intraday = True
     symbol = 'SPX'
     benchmark = 'SPX'
-    datapath = os.path.join('../data/', f'{symbol}.csv')
-    data = qt.util.read_ohlcv_csv(datapath)
     init_capital = 100_000.0
-    test_start_date = datetime(2010,1,1, 8, 30, 0, 0, pytz.timezone('America/New_York'))
-    test_end_date = datetime(2019,12,31, 6, 0, 0, 0, pytz.timezone('America/New_York'))
+
+    if not is_intraday:
+        test_start_date = datetime(2010, 1, 1, 8, 30, 0, 0, pytz.timezone('America/New_York'))
+        test_end_date = datetime(2019, 12, 31, 6, 0, 0, 0, pytz.timezone('America/New_York'))
+        datapath = os.path.join('../data/', f'{symbol}.csv')
+        data = qt.util.read_ohlcv_csv(datapath)
+    else:
+        # it seems initialize timezone doesn't work
+        eastern = pytz.timezone('US/Eastern')
+        test_start_date = eastern.localize(datetime(2020, 8, 10, 9, 30, 0))
+        test_end_date = eastern.localize(datetime(2020, 8, 10, 10, 0, 0))
+        dict_hist_data = {}
+        if os.path.isfile('../data/tick/20200810.pkl'):
+            with open('../data/tick/20200810.pkl', 'rb') as f:
+                dict_hist_data = pickle.load(f)
+        data = dict_hist_data['ESU0 FUT GLOBEX']
+        data.index = data.index.tz_localize('America/New_York')  # US/Eastern, UTC
 
     if do_optimize:          # parallel parameter search
         params_list = []
@@ -127,7 +142,10 @@ if __name__ == '__main__':
         # ------------------------- Evaluation and Plotting -------------------------------------- #
         strat_ret = ds_equity.pct_change().dropna()
         strat_ret.name = 'strat'
-        bm = qt.util.read_ohlcv_csv(os.path.join('../data/', f'{benchmark}.csv'))
+        if not is_intraday:
+            bm = qt.util.read_ohlcv_csv(os.path.join('../data/', f'{benchmark}.csv'))
+        else:
+            bm = data      # buy and hold
         bm_ret = bm['Close'].pct_change().dropna()
         bm_ret.index = pd.to_datetime(bm_ret.index)
         bm_ret = bm_ret[strat_ret.index]
