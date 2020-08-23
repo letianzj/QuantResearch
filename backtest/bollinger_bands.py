@@ -15,6 +15,7 @@ import empyrical as ep
 import pyfolio as pf
 # set browser full width
 from IPython.core.display import display, HTML
+pd.set_option('display.max_columns', None)
 display(HTML("<style>.container { width:100% !important; }</style>"))
 
 
@@ -197,4 +198,13 @@ if __name__ == '__main__':
             f6.show()
             f7 = plt.figure(7)
             pf.plot_monthly_returns_dist(strat_ret)
+            plt.show()
+            f8 = plt.figure(8)
+            pf.create_position_tear_sheet(strat_ret, df_positions)
+            plt.show()
+            f9 = plt.figure(9)
+            pf.create_txn_tear_sheet(strat_ret, df_positions, df_trades)
+            plt.show()
+            f10 = plt.figure(10)
+            pf.create_round_trip_tear_sheet(strat_ret, df_positions, df_trades)
             plt.show()
