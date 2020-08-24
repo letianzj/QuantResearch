@@ -21,12 +21,12 @@ To use pyfolio 0.9.2
         stats_all = (ss.T.rename({1.0: 'All trades'}, axis='columns'))
 4. line 385, same for RETURN_STATS as in 3
 5. utils print_table, add print(table) to use outside jupyter
-6. line 840 in tears.py, add
-        positions_bod = positions.sum(axis='columns') / (1 + returns)
-        positions_bod.index = positions_bod.index.to_series().apply(lambda x: x.replace(hour=0, minute=0, second=0))
+6. line 269 in round_trips.py, remove  x.replace(hour=0, minute=0, second=0)
+7. line 778 in tears.py, add general exception to catch intraday no daily
+8. line 892 in tears.py, return trades
 """
 import pyfolio as pf
-import pickle
+pd.set_option('display.max_columns', None)
 # set browser full width
 from IPython.core.display import display, HTML
 display(HTML("<style>.container { width:100% !important; }</style>"))
@@ -97,6 +97,7 @@ if __name__ == '__main__':
         datapath = os.path.join('../data/', f'{symbol}.csv')
         data = qt.util.read_ohlcv_csv(datapath)
     else:
+        import pickle
         # it seems initialize timezone doesn't work
         eastern = pytz.timezone('US/Eastern')
         test_start_date = eastern.localize(datetime(2020, 8, 10, 9, 30, 0))
@@ -107,6 +108,11 @@ if __name__ == '__main__':
                 dict_hist_data = pickle.load(f)
         data = dict_hist_data['ESU0 FUT GLOBEX']
         data.index = data.index.tz_localize('America/New_York')  # US/Eastern, UTC
+        data = data[(data.index >= test_start_date) & (data.index <= test_end_date)]
+        data2 = data.copy()
+        data2.index = data2.index.shift(1, freq='D')
+        data = pd.concat([data, data2], axis=0)
+        test_end_date = eastern.localize(datetime(2020, 8, 11, 10, 0, 0))
 
     if do_optimize:          # parallel parameter search
         params_list = []
@@ -122,16 +128,18 @@ if __name__ == '__main__':
             strategy.set_symbols([symbol])
             backtest_engine = qt.BacktestEngine(test_start_date, test_end_date)
             backtest_engine.set_capital(init_capital)  # capital or portfolio >= capital for one strategy
-            backtest_engine.add_data(symbol, data)
+            backtest_engine.add_data(symbol, data.copy())
             strategy.set_params({'lookback': params['lookback']})
             backtest_engine.set_strategy(strategy)
             tag = (params['lookback'])
-            p = multiprocessing.Process(target=parameter_search, args=(backtest_engine, tag, target_name, return_dict))
-            jobs.append(p)
-            p.start()
-
-        for proc in jobs:
-            proc.join()
+            print(params)
+            parameter_search(backtest_engine, tag, target_name, return_dict)
+        #     p = multiprocessing.Process(target=parameter_search, args=(backtest_engine, tag, target_name, return_dict))
+        #     jobs.append(p)
+        #     p.start()
+        #
+        # for proc in jobs:
+        #     proc.join()
         for k,v in return_dict.items():
             print(k, v)
     else:
@@ -191,6 +199,16 @@ if __name__ == '__main__':
                 round_trips=False)
             plt.show()
         else:
+            pf.plotting.show_perf_stats(
+                strat_ret, bm_ret,
+                positions=df_positions,
+                transactions=df_trades)
+            pf.plotting.show_worst_drawdown_periods(strat_ret)
+
+            pf.plot_perf_stats(strat_ret, bm_ret)
+            plt.show()
+            pf.plotting.plot_returns(strat_ret)
+            plt.show()
             f1 = plt.figure(1)
             pf.plot_rolling_returns(strat_ret, factor_returns=bm_ret)
             f1.show()
@@ -213,11 +231,17 @@ if __name__ == '__main__':
             pf.plot_monthly_returns_dist(strat_ret)
             plt.show()
             f8 = plt.figure(8)
-            pf.create_position_tear_sheet(strat_ret, df_positions)
+            pf.create_interesting_times_tear_sheet(strat_ret, benchmark_rets=bm_ret)
             plt.show()
             f9 = plt.figure(9)
-            pf.create_txn_tear_sheet(strat_ret, df_positions, df_trades)
-            plt.show()
+            pf.create_position_tear_sheet(strat_ret, df_positions)
+            # plt.show()
             f10 = plt.figure(10)
-            pf.create_round_trip_tear_sheet(strat_ret, df_positions, df_trades)
+            pf.create_txn_tear_sheet(strat_ret, df_positions, df_trades)
+            # plt.show()
+            f11 = plt.figure(11)
+            trades_details = pf.create_round_trip_tear_sheet(strat_ret, df_positions, df_trades)
             plt.show()
+            print(trades_details)
+            trades_details.to_csv('{}{}{}'.format('./output', '/trades_details_', '.csv'))
+            # data.to_csv('{}{}{}'.format('./output', '/data_', '.csv'))

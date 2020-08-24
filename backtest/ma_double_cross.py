@@ -181,6 +181,16 @@ if __name__ == '__main__':
                 round_trips=False)
             plt.show()
         else:
+            pf.plotting.show_perf_stats(
+                strat_ret, bm_ret,
+                positions=df_positions,
+                transactions=df_trades)
+            pf.plotting.show_worst_drawdown_periods(strat_ret)
+
+            pf.plot_perf_stats(strat_ret, bm_ret)
+            plt.show()
+            pf.plotting.plot_returns(strat_ret)
+            plt.show()
             f1 = plt.figure(1)
             pf.plot_rolling_returns(strat_ret, factor_returns=bm_ret)
             f1.show()
@@ -203,11 +213,14 @@ if __name__ == '__main__':
             pf.plot_monthly_returns_dist(strat_ret)
             plt.show()
             f8 = plt.figure(8)
-            pf.create_position_tear_sheet(strat_ret, df_positions)
+            pf.create_interesting_times_tear_sheet(strat_ret, benchmark_rets=bm_ret)
             plt.show()
             f9 = plt.figure(9)
-            pf.create_txn_tear_sheet(strat_ret, df_positions, df_trades)
-            plt.show()
+            pf.create_position_tear_sheet(strat_ret, df_positions)
+            # plt.show()
             f10 = plt.figure(10)
+            pf.create_txn_tear_sheet(strat_ret, df_positions, df_trades)
+            # plt.show()
+            f11 = plt.figure(11)
             pf.create_round_trip_tear_sheet(strat_ret, df_positions, df_trades)
             plt.show()
