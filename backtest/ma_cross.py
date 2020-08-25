@@ -102,17 +102,15 @@ if __name__ == '__main__':
         eastern = pytz.timezone('US/Eastern')
         test_start_date = eastern.localize(datetime(2020, 8, 10, 9, 30, 0))
         test_end_date = eastern.localize(datetime(2020, 8, 10, 10, 0, 0))
-        dict_hist_data = {}
-        if os.path.isfile('../data/tick/20200810.pkl'):
-            with open('../data/tick/20200810.pkl', 'rb') as f:
-                dict_hist_data = pickle.load(f)
+        dict_hist_data = qt.util.read_intraday_bar_pickle('../data/tick/20200810.pkl', ['ESU0 FUT GLOBEX'])
         data = dict_hist_data['ESU0 FUT GLOBEX']
-        data.index = data.index.tz_localize('America/New_York')  # US/Eastern, UTC
         data = data[(data.index >= test_start_date) & (data.index <= test_end_date)]
         data2 = data.copy()
         data2.index = data2.index.shift(1, freq='D')
         data = pd.concat([data, data2], axis=0)
         test_end_date = eastern.localize(datetime(2020, 8, 11, 10, 0, 0))
+
+        dict_hist_data = qt.util.read_tick_data_txt('d:/workspace/quanttrading2/examples/tick/20200824.txt')
 
     if do_optimize:          # parallel parameter search
         params_list = []
