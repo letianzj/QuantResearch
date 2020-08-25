@@ -111,6 +111,10 @@ if __name__ == '__main__':
         test_end_date = eastern.localize(datetime(2020, 8, 11, 10, 0, 0))
 
         dict_hist_data = qt.util.read_tick_data_txt('d:/workspace/quanttrading2/examples/tick/20200824.txt')
+        data = dict_hist_data[' ESU0 FUT GLOBEX']
+        data['Close'] = data['Price']
+        test_start_date = eastern.localize(datetime(2020, 8, 24, 22, 0, 0))
+        test_end_date = eastern.localize(datetime(2020, 8, 24, 22, 30, 0))
 
     if do_optimize:          # parallel parameter search
         params_list = []
