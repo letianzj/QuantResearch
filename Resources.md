@@ -1,6 +1,7 @@
 * [Websites](#websites)
 * [Blogs](#blogs)
 * [Projects](#projects)
+* [Data](#data)
 * [Books](#books)
 * [Papers](#papers)
 
@@ -8,7 +9,17 @@
 
 ## Websites
 
+* [https://chatwithtraders.com/](https://chatwithtraders.com/) - 
 
+* [Wilmott](https://forum.wilmott.com/) - 
+
+* [quant stackexchange](https://quant.stackexchange.com/) - 
+
+* [QuantNet](https://quantnet.com/forum/) - 
+
+* [SmartQuant](http://www.smartquant.com/forums/) - 
+
+* [Traders Laboratory](http://www.traderslaboratory.com/forums/) - 
 
 ## Blogs
 
@@ -23,17 +34,29 @@
 
 * [PyQuant News](http://pyquantnews.com/) - resources and news
 
+* [https://alphaarchitect.com/blog/](https://alphaarchitect.com/blog/)
+
 * [https://asmquantmacro.com/](https://asmquantmacro.com/)
 
 * [https://cssanalytics.wordpress.com/](https://cssanalytics.wordpress.com/)
 
+* [http://jonathankinlay.com/](http://jonathankinlay.com/)
+
+* [https://www.pythonforfinance.net/](https://www.pythonforfinance.net/)
+
 * [https://qoppac.blogspot.com/](https://qoppac.blogspot.com/)
 
+* [Quantified Strategies](http://www.quantifiedstrategies.com/) - 
+
 * [https://quantoisseur.com/](https://quantoisseur.com/)
+
+* [https://robotwealth.com/blog/](https://robotwealth.com/blog/)
 
 * [https://systematicedge.wordpress.com/](https://systematicedge.wordpress.com/)
 
 * [https://systematicinvestor.wordpress.com/](https://systematicinvestor.wordpress.com/)
+
+* [https://www.thertrader.com/](https://www.thertrader.com/)
 
 
 ## Projects
@@ -52,6 +75,9 @@
 
 * [awesome-ai-in-finance](https://github.com/georgezouq/awesome-ai-in-finance) - Machine learning strategies and useful tools use in financial market
 
+## Data
+
+* [iqfeed](https://www.iqfeed.net/)
 
 ## Books
 

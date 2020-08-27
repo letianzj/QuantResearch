@@ -86,7 +86,7 @@ def parameter_search(engine, tag, target_name, return_dict):
 if __name__ == '__main__':
     do_optimize = False
     run_in_jupyter = False
-    is_intraday = True
+    is_intraday = False
     symbol = 'SPX'
     benchmark = 'SPX'
     init_capital = 100_000.0
