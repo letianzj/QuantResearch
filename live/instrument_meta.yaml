@@ -1,0 +1,50 @@
+# default:  multiplier: 1
+#           margin: 100%
+ES:
+  Type: FUT
+  Root: ES
+  Multiplier: 50.0
+  Margin: 12000.0
+  Exchange: GLOBEX
+NQ:
+  Type: FUT
+  Root: NQ
+  Multiplier: 20.0
+  Margin: 16000.0
+  Exchange: GLOBEX
+MES:
+  Type: FUT
+  Root: MES
+  Multiplier: 5.0
+  Margin: 1200.0
+  Exchange: GLOBEX
+MNQ:
+  Type: FUT
+  Root: MNQ
+  Multiplier: 2.0
+  Margin: 1600.0
+  Exchange: GLOBEX
+CL:
+  Type: FUT
+  Root: CL
+  Multiplier: 1000.0
+  Margin: 6200.0
+  Exchange: NYMEX
+HO:
+  Type: FUT
+  Root: HO
+  Multiplier: 42000.0
+  Margin: 5100.0
+  Exchange: NYMEX
+RB:
+  Type: FUT
+  Root: RB
+  Multiplier: 42000.0
+  Margin: 6000.0
+  Exchange: NYMEX
+NG:
+  Type: FUT
+  Root: NG
+  Multiplier: 10000.0
+  Margin: 2300.0
+  Exchange: NYMEX
