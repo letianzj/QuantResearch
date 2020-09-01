@@ -246,6 +246,8 @@ fixed and used to train the system for the next day prediction on a rolling basi
 
 * [Gu, Shihao, Bryan Kelly, and Dacheng Xiu. "Autoencoder asset pricing models." Journal of Econometrics (2020).](https://www.sciencedirect.com/science/article/abs/pii/S0304407620301998)
 
+* [Hongyang Yang, Xiao-Yang Liu, Shan Zhong, and Anwar Walid. 2020. Deep Reinforcement Learning for Automated Stock Trading: An Ensemble Strategy. In ICAIF ’20](https://github.com/AI4Finance-LLC/Deep-Reinforcement-Learning-for-Automated-Stock-Trading-Ensemble-Strategy-ICAIF-2020)
+
 * [Kaur, Simerjot. "Algorithmic Trading using Sentiment Analysis and Reinforcement Learning."](https://pdfs.semanticscholar.org/3ed5/3a69019089c467289f5e43486785a8fcd856.pdf)
 
 * [Ozbayoglu, Ahmet Murat, Mehmet Ugur Gudelek, and Omer Berat Sezer. "Deep learning for financial applications: A survey." Applied Soft Computing (2020): 106384.](https://arxiv.org/pdf/2002.05786.pdf) - survey
