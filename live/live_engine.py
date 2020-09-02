@@ -18,10 +18,9 @@ import logging
 signal(SIGINT, SIG_DFL)
 
 
-def main(config_file):
+def main(config_file, instrument_meta_file):
     config = None
     today =  datetime.today().strftime('%Y%m%d')
-    strategy_dict = {}
     try:
         # path = os.path.abspath(os.path.dirname(__file__))
         # config_file = os.path.join(path, 'config.yaml')
@@ -29,6 +28,13 @@ def main(config_file):
             config = yaml.safe_load(fd)
     except IOError:
         print("config.yaml is missing")
+
+    instrument_meta = {}
+    try:
+        with open(instrument_meta_file, encoding='utf8') as fd:
+            instrument_meta = yaml.safe_load(fd)
+    except IOError:
+        pass
 
     required_dirs = ['./log/', './tick/', './strategy/']
     for d in required_dirs:
@@ -76,7 +82,7 @@ def main(config_file):
 
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon("gui/image/logo.ico"))
-    mainWindow = MainWindow(config, strategy_dict)
+    mainWindow = MainWindow(config, instrument_meta, strategy_dict)
 
     if config['theme'] == 'dark':
         import qdarkstyle
@@ -89,6 +95,7 @@ def main(config_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Live Engine')
     parser.add_argument('-f', '--config_file', dest = 'config_file', default='./config_live.yaml', help='config yaml file')
+    parser.add_argument('-m', '--instrument_meta', dest='instrument_meta', default='./instrument_meta.yaml', help='instrument meta file')
     args = parser.parse_args()
 
-    main(args.config_file)
+    main(args.config_file, args.instrument_meta)

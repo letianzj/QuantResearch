@@ -3,6 +3,10 @@ theme: dark           # white, dark
 host: '127.0.0.1'
 port: 7497
 client_id: 0
+total_trade_limit: 20
+total_cancel_limit: 10
+total_active_limit: 3
+total_loss_limit: 5000
 
 #-------------- active strategies -------------#
 strategy:
@@ -12,16 +16,22 @@ strategy:
     params:
       G: 20
     symbols:
-      - CLV0 FUT NYMEX 1000
+      - CLV0 FUT NYMEX
   OrderPerIntervalStrategy:
     active: False
     capital: 50000
+    order_start_time: 9:40:00
+    order_end_time: 15:50:00
+    single_trade_limit: 3
+    total_trade_limit: 10
+    total_cancel_limit: 5
+    total_active_limit: 2
+    total_loss_limit: 3000
     params:
-      tick_trigger_threshold: 5000
+      tick_trigger_threshold: 2000
     symbols:
       #- SPY STK SMART
       #- AAPL STK SMART
       #- AMZN STK SMART
-      - ESU0 FUT GLOBEX 50
-      #- CLV0 FUT NYMEX 1000
-      #- NGV0 FUT NYMEX 10000
+      - ESU0 FUT GLOBEX
+      #- NGV0 FUT NYMEX
