@@ -20,15 +20,15 @@ strategy:
   OrderPerIntervalStrategy:
     active: False
     capital: 50000
-    order_start_time: 9:40:00
+    order_start_time: 09:40:00      # pad 0 in front
     order_end_time: 15:50:00
     single_trade_limit: 3
-    total_trade_limit: 10
+    total_trade_limit: 15
     total_cancel_limit: 5
     total_active_limit: 2
-    total_loss_limit: 3000
+    total_loss_limit: 500
     params:
-      tick_trigger_threshold: 2000
+      tick_trigger_threshold: 1000
     symbols:
       #- SPY STK SMART
       #- AAPL STK SMART
