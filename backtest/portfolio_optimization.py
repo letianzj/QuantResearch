@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytz
 from datetime import datetime, timezone
-import quanttrading2 as qt
+import quanttrader as qt
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import empyrical as ep

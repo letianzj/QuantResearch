@@ -17,7 +17,7 @@
 |5 |  [MCMC Linear Regression](./notebooks/mcmc_linear_regression.py)    |[link](https://letianzj.github.io/mcmc-linear-regression.html)|
 |6 |  [Kalman Filter Linear Regression](./notebooks/kalman_filter_linear_regression.py)    |[link](https://letianzj.github.io/kalman-filter-linear-regression.html)|
 |7 |  [Tensorflow Linear Regression](./notebooks/tensorflow_linear_regression.ipynb)    |[link](https://letianzj.github.io/tensorflow-linear-regression.html)|
-|8 |  [quanttrading2](https://github.com/letianzj/quanttrading2)    |[link](https://letianzj.github.io/quanttrading-backtest.html)|
+|8 |  [quanttrader](https://github.com/letianzj/quanttrader)    |[link](https://letianzj.github.io/quanttrading-backtest.html)|
 |9 |  [Mean Reversion](./notebooks/mean_reversion.py)    |[link](https://letianzj.github.io/mean-reversion.html)|
 |10 |  [Cointegration and Pairs Trading](./notebooks/cointegration_pairs_trading.py)    |[link](https://letianzj.github.io/cointegration-pairs-trading.html)|
 |11 |  [Kalman Filter and Pairs Trading](./notebooks/pairs_trading_kalman_filter.py)    |[link](https://letianzj.github.io/kalman-filter-pairs-trading.html)|
@@ -32,7 +32,7 @@
 |20 |  [Volume Factor Evaluation Alphalens](./notebooks/volume_factor_alphalens.ipynb)    |&nbsp;|
 |21 |  [Reinforcement Backtest](./backtest/trading_env.py)    |&nbsp;|
 |22 |  [Reinforcement Option Pricing](./ml/american_option.ipynb)    |[link](https://medium.com/@letian.zj/option-pricing-using-reinforcement-learning-ad2ddca7735b)|
-|23 |  [Irregular Interval EMA](https://github.com/letianzj/quanttrading2/blob/master/examples/strategy/moving_average_cross_strategy.py)    |[link](https://letianzj.github.io/exponential-moving-average.html)|
+|23 |  [Irregular Interval EMA](https://github.com/letianzj/quanttrader/blob/master/examples/strategy/moving_average_cross_strategy.py)    |[link](https://letianzj.github.io/exponential-moving-average.html)|
 
 ```python
 

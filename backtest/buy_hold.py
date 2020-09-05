@@ -7,7 +7,7 @@ import pandas as pd
 import pytz
 from datetime import datetime, timezone
 import multiprocessing
-import quanttrading2 as qt
+import quanttrader as qt
 import matplotlib.pyplot as plt
 import empyrical as ep
 import pyfolio as pf

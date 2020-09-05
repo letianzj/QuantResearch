@@ -9,7 +9,7 @@ import pytz
 from datetime import datetime, timezone
 import multiprocessing
 import talib
-import quanttrading2 as qt
+import quanttrader as qt
 import matplotlib.pyplot as plt
 import empyrical as ep
 import pyfolio as pf
@@ -74,7 +74,7 @@ class BollingerBands(qt.StrategyBase):
 def parameter_search(engine, tag, target_name, return_dict):
     """
     This function should be the same for all strategies.
-    The only reason not included in quanttrading2 is because of its dependency on pyfolio (to get perf_stats)
+    The only reason not included in quanttrader is because of its dependency on pyfolio (to get perf_stats)
     """
     ds_equity, _, _ = engine.run()
     try:

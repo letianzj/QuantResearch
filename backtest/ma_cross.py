@@ -8,7 +8,7 @@ import pandas as pd
 import pytz
 from datetime import datetime, timezone
 import multiprocessing
-import quanttrading2 as qt
+import quanttrader as qt
 import matplotlib.pyplot as plt
 import empyrical as ep
 """
@@ -71,7 +71,7 @@ class MACross(qt.StrategyBase):
 def parameter_search(engine, tag, target_name, return_dict):
     """
     This function should be the same for all strategies.
-    The only reason not included in quanttrading2 is because of its dependency on pyfolio (to get perf_stats)
+    The only reason not included in quanttrader is because of its dependency on pyfolio (to get perf_stats)
     """
     ds_equity, _, _ = engine.run()
     try:
@@ -110,7 +110,7 @@ if __name__ == '__main__':
         data = pd.concat([data, data2], axis=0)
         test_end_date = eastern.localize(datetime(2020, 8, 11, 10, 0, 0))
 
-        dict_hist_data = qt.util.read_tick_data_txt('d:/workspace/quanttrading2/examples/tick/20200824.txt')
+        dict_hist_data = qt.util.read_tick_data_txt('d:/workspace/quanttrader/examples/tick/20200824.txt')
         data = dict_hist_data[' ESU0 FUT GLOBEX']
         data['Close'] = data['Price']
         test_start_date = eastern.localize(datetime(2020, 8, 24, 22, 0, 0))
