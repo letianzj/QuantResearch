@@ -44,7 +44,7 @@
 
 * [https://www.pythonforfinance.net/](https://www.pythonforfinance.net/)
 
-* [https://qoppac.blogspot.com/](https://qoppac.blogspot.com/)
+* [https://qoppac.blogspot.com/](https://qoppac.blogspot.com/) - [Systematic Trading - A unique new method for designing trading and investing systems](https://www.amazon.com/Systematic-Trading-designing-trading-investing/dp/0857194453)
 
 * [Quantified Strategies](http://www.quantifiedstrategies.com/) - 
 
