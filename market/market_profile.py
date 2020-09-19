@@ -243,7 +243,6 @@ def market_profile(df, price_pace=0.25, time_pace='30T', return_raw=False):
                                     showarrow=False))
             non_zero_time += 1
     fig.update_layout(annotations=annotations)
-    fig.show()
 
     return fig
 
