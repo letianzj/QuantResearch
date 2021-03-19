@@ -65,7 +65,7 @@ def save(df, fn):
 
 def run(args):
     current_path = os.path.dirname(os.path.abspath(__file__))
-    hist_path = os.path.join(current_path, '..\data')
+    hist_path = os.path.join(current_path, '..', 'data')
     end_date = datetime.today()
     #start_date = end_date + timedelta(days=-5 * 365)
     start_date = datetime(2006, 1, 1)
