@@ -23,7 +23,7 @@
 |11 |  [Kalman Filter and Pairs Trading](./notebooks/pairs_trading_kalman_filter.py)    |[link](https://letianzj.github.io/kalman-filter-pairs-trading.html)|
 |12 |  [Hidden Markov Chain](./notebooks/hidden_markov_chain.py)    |[link](https://letianzj.github.io/hidden-markov-chain.html)|
 |13 |  [RNN Stock Prediction](./notebooks/rnn_stock_prediction.py)    |[link](https://letianzj.github.io/rnn-stock-prediction.html)|
-|14 |  [Principal Componenet Analysis](./notebooks/principal_component_analysis.ipynb)    |[link](https://letianzj.github.io/principal-component-analysis.html)|
+|14 |  [Principal Componenet Analysis](./notebooks/ch1_pca_relative_value.ipynb)    |[link](https://letianzj.gitbook.io/systematic-investing/products_and_methodologies/fixed_income)|
 |15 |  [ARIMA and GARCH Models](./notebooks/arima_garch.ipynb)    |[link](https://letianzj.github.io/arima-garch-model.html)|
 |16 |  [Fama-French three-factor](./notebooks/fama_french.ipynb)    |&nbsp;|
 |17 |  [Vector AutoRegression](./notebooks/vector_autoregression.ipynb)    |&nbsp;|
