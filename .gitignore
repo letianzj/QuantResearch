@@ -138,3 +138,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# h5
+*.h5
+# do not upload settings
+eod/global_settings.py
+eod/.vscode
