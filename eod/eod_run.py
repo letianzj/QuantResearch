@@ -36,9 +36,9 @@ import h5py
 import zipfile
 from shutil import copyfile
 import global_settings
-from stocks_downloader import download_stocks_hist_prices, download_stocks_hist_1m_data
+from stocks_downloader import download_stocks_hist_prices, download_stocks_hist_1m_data, download_vix_index_from_cboe
 from futures_downloader import download_futures_hist_prices_from_quandl
-from misc_downloader import download_treasury_curve_from_gov, download_option_stats_from_cboe
+from misc_downloader import download_treasury_curve_from_gov, download_option_stats_from_cboe, download_current_cot_from_cftc
 from curve_constructor import construct_inter_commodity_spreads, construct_comdty_generic_hist_prices, construct_inter_comdty_generic_hist_prices, construct_comdty_curve_fly
 import data_loader
 
@@ -47,7 +47,7 @@ today = datetime.today()
 script = os.path.basename(__file__).split('.')[0]
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,      # logging.INFO
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.FileHandler(f"log/{today.strftime('%Y%m%d')}.log"),
@@ -77,72 +77,80 @@ def main(args):
 
     if args.stocks:
         try:
-            #download_stocks_hist_prices()
-            logging.info('stock prices updated.')
+            logging.info('-------- download stock prices --------')
+            download_stocks_hist_prices()
+            logging.info('-------- stock prices updated --------')
         except:
-            logging.error('stock prices failed.')
+            logging.error('-------- stock prices failed --------')
         time.sleep(3)
 
         try:
+            logging.info('-------- download VIX index --------')
             # download_vix_index_from_cboe()
-            logging.info('VIX Index updated.')
+            logging.info('-------- VIX Index updated --------')
         except:
-            logging.error('VIX Index failed')
+            logging.error('-------- VIX Index failed --------')
         time.sleep(3)
 
         try:
+            logging.info('-------- download FX rates --------')
             # download_fx_rates_from_ecb()
-            logging.info('FX Rates updated.')
+            logging.info('-------- FX Rates updated --------')
         except:
-            logging.error('FX Rates failed')
+            logging.error('-------- FX Rates failed --------')
         time.sleep(3)
 
     if args.intraday:
         try:
-            logging.info('download intraday 1m data --------')
-            download_stocks_hist_1m_data()
-            logging.info('1m intraday data succeeded --------')
+            logging.info('-------- download intraday 1m data --------')
+            # download_stocks_hist_1m_data()
+            logging.info('-------- 1m intraday data succeeded --------')
         except:
-            logging.error('1m intraday data failed')
+            logging.error('-------- 1m intraday data failed --------')
         time.sleep(3)
 
     if args.futures:
         try:
+            logging.info('-------- download futures prices --------')
             download_futures_hist_prices_from_quandl()
-            logging.info('futures prices updated.')
+            logging.info('-------- futures prices updated --------')
         except:
-            logging.error('futures prices failed.')
+            logging.error(' --------futures prices failed --------')
         time.sleep(3)
 
         try:
+            logging.info('-------- download VIX futures --------')
             # download_vix_futures_from_cboe()
-            logging.info('VIX Futures updated.')
+            logging.info('-------- VIX Futures updated --------')
         except:
-            logging.error('VIX futures failed')
+            logging.error('-------- VIX futures failed --------')
         time.sleep(3)
 
     if args.misc:
         # key: PCR:VIX PCR:SPX USDT etc
         misc_dict = data_loader.load_misc()
         try:
+            logging.info('-------- download treasury curve --------')
             download_treasury_curve_from_gov(misc_dict)
-            logging.info('treasury curve updated.')
+            logging.info('-------- treasury curve updated --------')
         except:
-            logging.error('treasury curve failed.')
+            logging.error('-------- treasury curve failed --------')
         time.sleep(3)
 
         try:
+            logging.info('-------- download VIX futures --------')
             download_option_stats_from_cboe(misc_dict)
-            logging.info('put call ratio updated.')
+            logging.info('-------- put call ratio updated --------')
         except:
-            logging.error('put call ratio failed')
+            logging.error('-------- put call ratio failed --------')
         time.sleep(3)
 
         try:
-            #download_current_cot_from_cftc()
-            logging.info('COT Table updated.')
+            logging.info('-------- download COT reports --------')
+            download_current_cot_from_cftc(misc_dict)
+            logging.info('-------- COT Table updated --------')
         except:
-            logging.error('COT Table failed')
+            logging.error('-------- COT Table failed --------')
         time.sleep(3)
 
         for k in misc_dict.keys():
@@ -150,17 +158,19 @@ def main(args):
 
     if args.generic:
         try:
+            logging.info('-------- Construct ICS --------')
             construct_inter_commodity_spreads()
-            logging.info('inter-commodity spread updated.')
+            logging.info('-------- inter-commodity spread updated --------')
         except:
-            logging.error('inter-commdity spread failed')
+            logging.error('-------- inter-commdity spread failed --------')
         time.sleep(3)
 
         try:
+            logging.info('-------- Construct generic hist prices --------')
             construct_comdty_generic_hist_prices()
-            logging.info('commodity generic prices updated.')
+            logging.info('-------- commodity generic prices updated --------')
         except:
-            logging.error('commodity generic prices failed')
+            logging.error('-------- commodity generic prices failed --------')
         time.sleep(3)
 
         try:
@@ -180,15 +190,25 @@ def main(args):
         time.sleep(3)
 
     # ------------- copy if valid -------------------------- #
+    logging.info('-------- Backup data h5 --------')
     is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/misc.h5'))
     if is_valid:
+        logging.info('-------- misc backed up --------')
         copyfile(os.path.join(global_settings.root_path, 'data/misc.h5'), os.path.join(global_settings.root_path, 'data/misc_bak.h5'))
+    else:
+        logging.error('-------- misc corrupted --------')
     is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/futures_historical_prices.h5'))
     if is_valid:
+        logging.info('-------- futures backed up --------')
         copyfile(os.path.join(global_settings.root_path, 'data/futures_historical_prices.h5'), os.path.join(global_settings.root_path, 'data/futures_historical_prices_bak.h5'))
-    # is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/stocks_historical_prices.h5'))
-    # if is_valid:
-    #     copyfile(os.path.join(global_settings.root_path, 'data/stocks_historical_prices.h5'), os.path.join(global_settings.root_path, 'data/stocks_historical_prices_bak.h5'))
+    else:
+        logging.error('-------- futures corrupted --------')
+    is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/stocks_historical_prices.h5'))
+    if is_valid:
+        logging.info('-------- stocks backed up --------')
+        copyfile(os.path.join(global_settings.root_path, 'data/stocks_historical_prices.h5'), os.path.join(global_settings.root_path, 'data/stocks_historical_prices_bak.h5'))
+    else:
+        logging.error('-------- stocks corrupted --------')
 
     end = time.time()
     run_time = round((end - start) / 60.0, 2)

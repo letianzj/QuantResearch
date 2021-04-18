@@ -22,10 +22,10 @@ def download_stocks_hist_prices() -> None:
         :return:
     """
     # cache_dir = os.path.dirname(os.path.realpath(__file__))
-    # start_date = datetime(2014, 11, 1)
+    start_date = datetime(2000, 1, 1)
     end_date = datetime.today()
     # start_date = end_date.replace(year=end_date.year - 5)  # restriction from IEX
-    start_date = end_date + timedelta(days=-global_settings.lookback_days)
+    # start_date = end_date + timedelta(days=-global_settings.lookback_days)
 
     # df_stocks_meta = pd.read_csv(os.path.join(global_settings.root_path, 'data/config/stocks_meta.csv'), index_col=0, keep_default_na=False)
     # df_stocks_meta = df_stocks_meta[df_stocks_meta['YAHOO'] != '']

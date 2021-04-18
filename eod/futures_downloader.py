@@ -25,9 +25,9 @@ def download_futures_hist_prices_from_quandl() -> None:
     TODO: should use ZC, ZS, ZW
     :return:
     """
-    # start_date = datetime(2000, 1, 1)
+    # start_date = datetime(2017, 1, 1)
     end_date = datetime.today()
-    start_date = end_date + timedelta(days=-30)
+    start_date = end_date + timedelta(days=-75)
 
     df_futures_meta = pd.read_csv(os.path.join(global_settings.root_path, 'data/config/futures_meta.csv'), index_col=0)
     df_futures_meta = df_futures_meta[~np.isnan(df_futures_meta['QuandlMultiplier'])]

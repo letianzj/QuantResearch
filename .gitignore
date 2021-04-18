@@ -142,5 +142,8 @@ dmypy.json
 # h5
 *.h5
 # do not upload settings
-eod/global_settings.py
+utils/global_settings.py
 eod/.vscode
+data/bak/
+data/config/
+data/tick/

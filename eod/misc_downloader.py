@@ -57,6 +57,8 @@ def download_vix_from_quandl(misc_dict: Dict) -> None:
     for i in range(1, 10):
         df = quandl.get('CHRIS/CBOE_VX'+str(i), start_date=start_date, end_date=end_date,
                         authtoken=global_settings.quandl_auth)
+    # for c in misc_dict['PCR:VIX'].columns:
+    #         misc_dict['PCR:VIX'][c] = misc_dict['PCR:VIX'][c].astype(np.int64)
 
 
 # https://markets.cboe.com/us/options/market_statistics/daily/
@@ -122,7 +124,7 @@ def download_current_cot_from_cftc(misc_dict: Dict) -> None:
     r_f = requests.get(url_f, stream=True)
     if r_f.ok:
         data_f = r_f.content.decode('utf8')
-    # with open(r'C:\Users\Letian\Downloads\f_year.txt') as csv_file:
+    # with open(r'C:\Users\Downloads\f_year.txt') as csv_file:
         for row in csv.reader(data_f.split('\n'), delimiter=',', quotechar='"'):
         # for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
             if row == []:
@@ -165,7 +167,7 @@ def download_current_cot_from_cftc(misc_dict: Dict) -> None:
     r_c = requests.get(url_c, stream=True)
     if r_c.ok:
         data_c = r_c.content.decode('utf8')
-    # with open(r'C:\Users\Letian\Downloads\c_year.txt') as csv_file:           # csv
+    # with open(r'C:\Users\Downloads\c_year.txt') as csv_file:           # csv
         for row in csv.reader(data_c.split('\n'), delimiter=',', quotechar='"'):
         # for row in csv.reader(csv_file, delimiter=',', quotechar='"'):       # csv
             if row == []:
@@ -217,7 +219,7 @@ def download_current_cot_from_cftc(misc_dict: Dict) -> None:
     r_f = requests.get(url_f, stream=True)
     if r_f.ok:
         data_f = r_f.content.decode('utf8')
-    # with open(r'C:\Users\Letian\Downloads\FinFutYY.txt') as csv_file:
+    # with open(r'C:\Users\Downloads\FinFutYY.txt') as csv_file:
         for row in csv.reader(data_f.split('\n'), delimiter=',', quotechar='"'):
         # for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
             if row == []:
@@ -260,7 +262,7 @@ def download_current_cot_from_cftc(misc_dict: Dict) -> None:
     r_c = requests.get(url_c, stream=True)
     if r_c.ok:
         data_c = r_c.content.decode('utf8')
-    # with open(r'C:\Users\Letian\Downloads\FinComYY.txt') as csv_file:
+    # with open(r'C:\Users\Downloads\FinComYY.txt') as csv_file:
         for row in csv.reader(data_c.split('\n'), delimiter=',', quotechar='"'):
         # for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
             if row == []:
