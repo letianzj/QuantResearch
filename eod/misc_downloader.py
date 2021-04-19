@@ -4,6 +4,7 @@ import os
 import time
 import numpy as np
 import pandas as pd
+import re
 from datetime import datetime, timedelta
 from typing import List, Set, Dict, Tuple, Sequence, Optional
 import yfinance as yf
@@ -74,6 +75,8 @@ def download_option_stats_from_cboe(misc_dict: Dict) -> None:
         webpage = requests.get(url)
         soup = BeautifulSoup(webpage.content, 'html.parser')
         tables = soup.find_all('table')
+        rmt = re.search('\d{4}-\d{2}-\d{2}', webpage.content.decode())
+        target_date = datetime.strptime(rmt.group(), '%Y-%m-%d')
         for sym_idx in range(3):
             symbol = symbols[sym_idx]
             symbol_not = symbols_not[sym_idx]
@@ -90,7 +93,7 @@ def download_option_stats_from_cboe(misc_dict: Dict) -> None:
                         row_dict['PV'] = np.int64(df.loc['VOLUME', 'PUT'])
                         row_dict['COI'] = np.int64(df.loc['OPEN INTEREST', 'CALL'])
                         row_dict['POI'] = np.int64(df.loc['OPEN INTEREST', 'PUT'])
-                        df_row = pd.DataFrame(row_dict, index=[asofdate.date()])
+                        df_row = pd.DataFrame(row_dict, index=[target_date.date()])
 
                         if sym_idx == 0:
                             if 'PCR:SPX' in misc_dict.keys():

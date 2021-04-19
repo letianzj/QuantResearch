@@ -131,15 +131,15 @@ def main(args):
         misc_dict = data_loader.load_misc()
         try:
             logging.info('-------- download treasury curve --------')
-            download_treasury_curve_from_gov(misc_dict)
+            # download_treasury_curve_from_gov(misc_dict)
             logging.info('-------- treasury curve updated --------')
         except:
             logging.error('-------- treasury curve failed --------')
         time.sleep(3)
 
         try:
-            logging.info('-------- download VIX futures --------')
-            download_option_stats_from_cboe(misc_dict)
+            logging.info('-------- download put call ratio --------')
+            # download_option_stats_from_cboe(misc_dict)
             logging.info('-------- put call ratio updated --------')
         except:
             logging.error('-------- put call ratio failed --------')
@@ -190,25 +190,26 @@ def main(args):
         time.sleep(3)
 
     # ------------- copy if valid -------------------------- #
-    logging.info('-------- Backup data h5 --------')
-    is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/misc.h5'))
-    if is_valid:
-        logging.info('-------- misc backed up --------')
-        copyfile(os.path.join(global_settings.root_path, 'data/misc.h5'), os.path.join(global_settings.root_path, 'data/misc_bak.h5'))
-    else:
-        logging.error('-------- misc corrupted --------')
-    is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/futures_historical_prices.h5'))
-    if is_valid:
-        logging.info('-------- futures backed up --------')
-        copyfile(os.path.join(global_settings.root_path, 'data/futures_historical_prices.h5'), os.path.join(global_settings.root_path, 'data/futures_historical_prices_bak.h5'))
-    else:
-        logging.error('-------- futures corrupted --------')
-    is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/stocks_historical_prices.h5'))
-    if is_valid:
-        logging.info('-------- stocks backed up --------')
-        copyfile(os.path.join(global_settings.root_path, 'data/stocks_historical_prices.h5'), os.path.join(global_settings.root_path, 'data/stocks_historical_prices_bak.h5'))
-    else:
-        logging.error('-------- stocks corrupted --------')
+    if args.backup:
+        logging.info('-------- Backup data h5 --------')
+        is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/misc.h5'))
+        if is_valid:
+            logging.info('-------- misc backed up --------')
+            copyfile(os.path.join(global_settings.root_path, 'data/misc.h5'), os.path.join(global_settings.root_path, 'data/misc_bak.h5'))
+        else:
+            logging.error('-------- misc corrupted --------')
+        is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/futures_historical_prices.h5'))
+        if is_valid:
+            logging.info('-------- futures backed up --------')
+            copyfile(os.path.join(global_settings.root_path, 'data/futures_historical_prices.h5'), os.path.join(global_settings.root_path, 'data/futures_historical_prices_bak.h5'))
+        else:
+            logging.error('-------- futures corrupted --------')
+        is_valid = check_h5_file(os.path.join(global_settings.root_path, 'data/stocks_historical_prices.h5'))
+        if is_valid:
+            logging.info('-------- stocks backed up --------')
+            copyfile(os.path.join(global_settings.root_path, 'data/stocks_historical_prices.h5'), os.path.join(global_settings.root_path, 'data/stocks_historical_prices_bak.h5'))
+        else:
+            logging.error('-------- stocks corrupted --------')
 
     end = time.time()
     run_time = round((end - start) / 60.0, 2)
@@ -223,6 +224,7 @@ if __name__ == '__main__':
     parser.add_argument("-m", "--misc", help="misc downloader", action="store_true")
     parser.add_argument("-g", "--generic", help="generic constructor", action="store_true")
     parser.add_argument("-c", "--curve", help="curve constructor", action="store_true")
+    parser.add_argument("-b", "--backup", help="backup if valid", action="store_true")
 
     args = parser.parse_args()
     main(args)
