@@ -45,7 +45,7 @@ def load_futures_meta_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, 
     return futures_meta_df, futures_contracts_meta_df, inter_comdty_spread_meta_df, inter_comdty_spread_contracts_meta_df
 
 
-def load_futures_hist_prices():
+def load_futures_hist_prices() -> Tuple[Dict, pd.Timestamp]:
     # cache_dir = os.path.dirname(os.path.realpath(__file__))
     futures_hist_prices_dict = dict()
     if os.path.isfile(os.path.join(global_settings.root_path, 'data/futures_historical_prices.h5')):

@@ -19,10 +19,10 @@ def get_futures_chain(meta_data: pd.DataFrame, asofdate: datetime.date) -> pd.Da
     return meta_data.iloc[dateidx:]
 
 
-def get_futures_generic_ticker(futures_chain, futures):
+def get_futures_generic_ticker(futures_chain: pd.DataFrame, futures: str) -> str:
     """
     get the generic ticker, e.g., NGZ19 ==> NG1
-    :param futures_chain: futures_chain on asofdate
+    :param futures_chain, pd.DataFrame NGZ19 indexed: futures_chain on asofdate
     :param futures: actual futures
     :return: generic futures
     """
@@ -30,7 +30,7 @@ def get_futures_generic_ticker(futures_chain, futures):
     return futures[:-3] + str(contract_idx+1)
 
 
-def get_futures_actual_ticker(futures_chain, generic_ticker):
+def get_futures_actual_ticker(futures_chain: pd.DataFrame, generic_ticker: str) -> str:
     """
     get the actual ticker, e.g., NG1 ==> NGZ19
     :param futurs_chain: futurs_chain on asofdate
@@ -44,19 +44,21 @@ def get_futures_actual_ticker(futures_chain, generic_ticker):
     return futures_chain.index[contract_idx]
 
 
-def get_generic_futures_hist_data(actual_futures_hist_data, meta_data):
+def get_generic_futures_hist_data(actual_futures_hist_data: pd.DataFrame, meta_data: pd.DataFrame) -> pd.DataFrame:
     """
     .   .   .   .   .   .   .   .
     .   .   .   .   .   .   .   .
-    .   .   .   .   .   .   .   .          <- roll_idx_previous
+    .   .   .   .   .   .   .   .          <- roll_idx_old
+        .   .   .   .   .   .   .          <- roll_idx_previous = roll_idx_old + 1
         .   .   .   .   .   .   .
-        .   .   .   .   .   .   .          <- roll_idx
+        .   .   .   .   .   .   .          <- roll_idx_new
             .   .   .   .   .   .
             .   .   .   .   .   .
             .   .   .   .   .   .          <- asofdate/dateidx
 
     construct generic futures hist data from actual futures hist data
-    It assume roll at last trading day, to stitch PRICE series together
+    It assume roll on last trading day, to stitch together PRICE series
+    iterativelly between roll_idx_previous and roll_idx
     :param actual_futures_hist_data: dataframe, index is date, column is futures
     :param meta_data: dataframe: actual futures ==> last_trading_day
     :return: dataframe: index is date, column is generic futures

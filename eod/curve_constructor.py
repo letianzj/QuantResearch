@@ -35,7 +35,7 @@ def construct_inter_commodity_spreads() -> None:
 
     inter_comdty_spread_hist_data_dict = {}
     meta_data_spread = pd.DataFrame(columns=['First_Trade_Date', 'Last_Trade_Date'])
-    for idx, row in df_config.iterrows():
+    for _, row in df_config.iterrows():
         Leg1 = row['Leg1'] + ' ' if len(row['Leg1']) == 1 else row['Leg1']
         Leg2 = row['Leg2'] + ' ' if len(row['Leg2']) == 1 else row['Leg2']
         Leg3 = row['Leg3'] + ' ' if len(row['Leg3']) == 1 else row['Leg3']
@@ -101,7 +101,7 @@ def construct_inter_commodity_spreads() -> None:
         logging.info('{} is constructed'.format(sym_root))
 
     meta_data_spread.sort_values(by='Last_Trade_Date', inplace=True,  axis=0, ascending=True)
-    meta_data_spread.to_csv(os.path.join(global_settings.root_path, 'data/inter_comdty_spread_contract_meta.csv'), index=True)
+    meta_data_spread.to_csv(os.path.join(global_settings.root_path, 'data/config/inter_comdty_spread_contract_meta.csv'), index=True)
     logging.info('commodity_inter_spread saved')
 
 
@@ -126,7 +126,7 @@ def construct_comdty_generic_hist_prices() -> None:
     for k in futures_data_dict.keys():
         futures_data_dict[k] = pd.read_hdf(os.path.join(global_settings.root_path, 'data/futures_historical_prices.h5'), key=k)
 
-    for idx, row in df_futures_meta.iterrows():
+    for idx, _ in df_futures_meta.iterrows():
         root_sym = idx
         try:
             gen = get_generic_futures_hist_data(futures_data_dict[root_sym], df_futures_contracts_meta.get_group(root_sym))
@@ -167,181 +167,10 @@ def construct_inter_comdty_generic_hist_prices() -> None:
             logging.error('{} failed to generate generic prices'.format(root_sym))
 
 
-def construct_comdty_curve_fly():
-    # cache_dir = os.path.dirname(os.path.realpath(__file__))
-    futures_meta_df, futures_contracts_meta_df, inter_comdty_spread_meta_df, inter_comdty_spread_contracts_meta_df = data_loader.load_futures_meta_data()
-    futures_hist_prices_dict = data_loader.load_futures_hist_prices()
-    generic_futures_hist_prices_dict = data_loader.load_comdty_generic_hist_prices()
-    generic_inter_comdty_hist_prices_dict = data_loader.load_inter_comdty_generic_hist_prices()
-    inter_comdty_spread_hist_data_dict = data_loader.load_inter_comdty_spread_hist_prices()
-
-    combined_root_syms = list(generic_futures_hist_prices_dict.keys())
-    combined_root_syms.extend(list(generic_inter_comdty_hist_prices_dict.keys()))
-
-    # get spread/fly for outright and inter-comdty-spread
-    for sym_root in combined_root_syms:
-        if ':' in sym_root:
-            hist_data = inter_comdty_spread_hist_data_dict[sym_root]
-            meta_data = inter_comdty_spread_contracts_meta_df[inter_comdty_spread_contracts_meta_df['Root'] == sym_root]
-            meta_data.sort_values('Last_Trade_Date', inplace=True)
-            generic_data = generic_inter_comdty_hist_prices_dict[sym_root]
-        else:
-            hist_data = futures_hist_prices_dict[sym_root]
-            meta_data = futures_contracts_meta_df[futures_contracts_meta_df['Root'] == sym_root]
-            meta_data.sort_values('Last_Trade_Date', inplace=True)
-            generic_data = generic_futures_hist_prices_dict[sym_root]
-
-        try:
-            asofdate = hist_data.index[-1]
-        except:     # probably no data
-            continue
-
-        meta_data = get_futures_chain(meta_data, asofdate)
-
-        # get spread combos
-        spread_combos = []
-        tenors = range(1, generic_data.shape[1] + 1)
-        for i in tenors:
-            for j in tenors:
-                spread = j - i
-                if i <= 24 and j > i and spread <= 12:
-                    spread_combos.append((i, j))
-
-        fly_combos = []
-        tenors = range(1, generic_data.shape[1] + 1)
-        for i in tenors:
-            for j in tenors:
-                spread1 = j - i
-                for k in tenors:
-                    spread2 = k - j
-                    if i <= 24 and j > i and k > j and spread1 <= 12 and spread2 <= 12 and spread1 == spread2:
-                        fly_combos.append((i, j, k,))
-
-        cols_spread = ['Name', 'Leg1', 'Leg2', 'Leg1 Actual', 'Leg2 Actual', 'Spread', 'Spread Prcnt', 'RD Prcnt', 'Spread Z-Score', 'RD Z-Score']
-        df_spread_stats = pd.DataFrame(columns=cols_spread)
-        for i in range(len(spread_combos)):
-            row_dict = {}
-            # extract individual CM time series tickers for combo [i]
-            try:
-                legA = generic_data[sym_root + str(spread_combos[i][0])]
-                legB = generic_data[sym_root + str(spread_combos[i][1])]
-            except:
-                logging.error('{} {} skipped'.format(sym_root, spread_combos[i]))
-                continue
-
-            try:
-                legA_RD = generic_data[sym_root + str(spread_combos[i][0] - 1)]
-                legB_RD = generic_data[sym_root + str(spread_combos[i][1] - 1)]
-                merged = pd.concat([legA, legB, legA_RD, legB_RD], axis=1).dropna(axis=0, how='any')
-            except:     # front month has no roll down
-                legA_RD = None
-                legB_RD = None
-                merged = pd.concat([legA, legB], axis=1).dropna(axis=0, how='any')
-
-            try:
-                merged['SpreadLevel'] = merged.iloc[:, 0] - merged.iloc[:, 1]
-                current_spread_level = merged.iloc[-1]['SpreadLevel']
-                percentile_spread = stats.percentileofscore(merged['SpreadLevel'], current_spread_level, kind='mean')
-                stdev_pread = np.std(merged['SpreadLevel'])
-                mean_spread = np.average(merged['SpreadLevel'])
-                z_spread = (current_spread_level - mean_spread) / stdev_pread
-                if legA_RD is not None:
-                    merged['RolledDownLevel'] = merged.iloc[:, 2] - merged.iloc[:, 3]
-                    percentile_RD = stats.percentileofscore(merged['RolledDownLevel'], current_spread_level, kind='mean')
-                    stdev_RD = np.std(merged['RolledDownLevel'])
-                    mean_RD = np.average(merged['RolledDownLevel'])
-                    z_RD = (current_spread_level - mean_RD) / stdev_RD
-                else:
-                    percentile_RD = np.NaN
-                    z_RD = np.NaN
-
-                row_dict['Name'] = sym_root
-                row_dict['Leg1'] = spread_combos[i][0]
-                row_dict['Leg2'] = spread_combos[i][1]
-                row_dict['Leg1 Actual'] = get_futures_actual_ticker(meta_data, legA.name)
-                row_dict['Leg2 Actual'] = get_futures_actual_ticker(meta_data, legB.name)
-                row_dict['Spread'] = round(current_spread_level, 4)
-                row_dict['Spread Prcnt'] = round(percentile_spread, 4)
-                row_dict['RD Prcnt'] = round(percentile_RD, 4)
-                row_dict['Spread Z-Score'] = round(z_spread, 4)
-                row_dict['RD Z-Score'] = round(z_RD, 4)
-
-                df_2 = pd.DataFrame(row_dict, index=[spread_combos[i]])
-                df_spread_stats = df_spread_stats.append(df_2)
-                logging.info('spread {} {} finished'.format(sym_root, spread_combos[i]))
-            except:
-                logging.error('spread {} {} failed'.format(sym_root, spread_combos[i]))
-
-        df_spread_stats.to_hdf(os.path.join(global_settings.root_path, 'data/spread_scores.h5'), key=sym_root)
-
-        cols_fly = ['Name', 'Leg1', 'Leg2', 'Leg3', 'Leg1 Actual', 'Leg2 Actual', 'Leg3 Actual', 'Fly', 'Fly Prcnt', 'RD Prcnt',
-                       'Fly Z-Score', 'RD Z-Score']
-        df_fly_stats = pd.DataFrame(columns=cols_fly)
-        for i in range(len(fly_combos)):
-            row_dict = {}
-            # extract individual CM time series tickers for combo [i]
-            try:
-                legA = generic_data[sym_root + str(fly_combos[i][0])]
-                legB = generic_data[sym_root + str(fly_combos[i][1])]
-                legC = generic_data[sym_root + str(fly_combos[i][2])]
-            except:
-                logging.error('{} {} skipped'.format(sym_root, fly_combos[i]))
-                continue
-
-            try:
-                legA_RD = generic_data[sym_root + str(fly_combos[i][0] - 1)]
-                legB_RD = generic_data[sym_root + str(fly_combos[i][1] - 1)]
-                legC_RD = generic_data[sym_root + str(fly_combos[i][2] - 1)]
-                merged = pd.concat([legA, legB, legC, legA_RD, legB_RD, legC_RD], axis=1).dropna(axis=0, how='any')
-            except:     # front month has no roll down
-                legA_RD = None
-                legB_RD = None
-                legC_RD = None
-                merged = pd.concat([legA, legB, legC], axis=1).dropna(axis=0, how='any')
-
-            try:
-                merged['FlyLevel'] = merged.iloc[:, 0] - 2.0 * merged.iloc[:, 1] + merged.iloc[:, 2]
-                current_fly_level = merged.iloc[-1]['FlyLevel']
-                percentile_fly = stats.percentileofscore(merged['FlyLevel'], current_fly_level, kind='mean')
-                stdev_fly = np.std(merged['FlyLevel'])
-                mean_fly = np.average(merged['FlyLevel'])
-                z_fly = (current_fly_level - mean_fly) / stdev_fly
-                if legA_RD is not None:
-                    merged['RolledDownLevel'] = merged.iloc[:, 3] - 2.0 * merged.iloc[:, 4] + merged.iloc[:, 5]
-                    percentile_RD = stats.percentileofscore(merged['RolledDownLevel'], current_fly_level, kind='mean')
-                    stdev_RD = np.std(merged['RolledDownLevel'])
-                    mean_RD = np.average(merged['RolledDownLevel'])
-                    z_RD = (current_fly_level - mean_RD) / stdev_RD
-                else:
-                    percentile_RD = np.NaN
-                    z_RD = np.NaN
-
-                row_dict['Name'] = sym_root
-                row_dict['Leg1'] = fly_combos[i][0]
-                row_dict['Leg2'] = fly_combos[i][1]
-                row_dict['Leg3'] = fly_combos[i][2]
-                row_dict['Leg1 Actual'] = get_futures_actual_ticker(meta_data, legA.name)
-                row_dict['Leg2 Actual'] = get_futures_actual_ticker(meta_data, legB.name)
-                row_dict['Leg3 Actual'] = get_futures_actual_ticker(meta_data, legC.name)
-                row_dict['Fly'] = round(current_fly_level, 4)
-                row_dict['Fly Prcnt'] = round(percentile_fly, 4)
-                row_dict['RD Prcnt'] = round(percentile_RD, 4)
-                row_dict['Fly Z-Score'] = round(z_fly, 4)
-                row_dict['RD Z-Score'] = round(z_RD, 4)
-
-                df_2 = pd.DataFrame(row_dict, index=[fly_combos[i]])
-                df_fly_stats = df_fly_stats.append(df_2)
-                logging.info('fly {} {} finished'.format(sym_root, fly_combos[i]))
-            except:
-                logging.error('fly {} {} failed'.format(sym_root, fly_combos[i]))
-
-        df_fly_stats.to_hdf(os.path.join(global_settings.root_path, 'data/fly_scores.h5'), key=sym_root)
-
-
 def construct_curve_spread_fly():
     # cache_dir = os.path.dirname(os.path.realpath(__file__))
-    futures_meta_df, futures_contracts_meta_df, inter_comdty_spread_meta_df, inter_comdty_spread_contracts_meta_df = data_loader.load_futures_meta_data()
-    futures_hist_prices_dict = data_loader.load_futures_hist_prices()
+    _, futures_contracts_meta_df, _, inter_comdty_spread_contracts_meta_df = data_loader.load_futures_meta_data()
+    futures_hist_prices_dict, _ = data_loader.load_futures_hist_prices()
     generic_futures_hist_prices_dict = data_loader.load_comdty_generic_hist_prices()
     inter_comdty_spread_hist_data_dict = data_loader.load_inter_comdty_spread_hist_prices()
     generic_inter_comdty_hist_prices_dict = data_loader.load_inter_comdty_generic_hist_prices()

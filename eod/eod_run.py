@@ -39,7 +39,7 @@ import global_settings
 from stocks_downloader import download_stocks_hist_prices, download_stocks_hist_1m_data, download_vix_index_from_cboe
 from futures_downloader import download_futures_hist_prices_from_quandl
 from misc_downloader import download_treasury_curve_from_gov, download_option_stats_from_cboe, download_current_cot_from_cftc
-from curve_constructor import construct_inter_commodity_spreads, construct_comdty_generic_hist_prices, construct_inter_comdty_generic_hist_prices, construct_comdty_curve_fly
+from curve_constructor import construct_inter_commodity_spreads, construct_comdty_generic_hist_prices, construct_inter_comdty_generic_hist_prices, construct_curve_spread_fly
 import data_loader
 
 today = datetime.today()
@@ -131,7 +131,7 @@ def main(args):
         misc_dict = data_loader.load_misc()
         try:
             logging.info('-------- download treasury curve --------')
-            # download_treasury_curve_from_gov(misc_dict)
+            download_treasury_curve_from_gov(misc_dict)
             logging.info('-------- treasury curve updated --------')
         except:
             logging.error('-------- treasury curve failed --------')
@@ -139,7 +139,7 @@ def main(args):
 
         try:
             logging.info('-------- download put call ratio --------')
-            # download_option_stats_from_cboe(misc_dict)
+            download_option_stats_from_cboe(misc_dict)
             logging.info('-------- put call ratio updated --------')
         except:
             logging.error('-------- put call ratio failed --------')
@@ -158,14 +158,6 @@ def main(args):
 
     if args.generic:
         try:
-            logging.info('-------- Construct ICS --------')
-            construct_inter_commodity_spreads()
-            logging.info('-------- inter-commodity spread updated --------')
-        except:
-            logging.error('-------- inter-commdity spread failed --------')
-        time.sleep(3)
-
-        try:
             logging.info('-------- Construct generic hist prices --------')
             construct_comdty_generic_hist_prices()
             logging.info('-------- commodity generic prices updated --------')
@@ -174,6 +166,15 @@ def main(args):
         time.sleep(3)
 
         try:
+            logging.info('-------- Construct ICS --------')
+            construct_inter_commodity_spreads()
+            logging.info('-------- inter-commodity spread updated --------')
+        except:
+            logging.error('-------- inter-commdity spread failed --------')
+        time.sleep(3)
+
+        try:
+            logging.info('-------- Construct ICS generic --------')
             construct_inter_comdty_generic_hist_prices()
             logging.info('inter-commodity generic spread updated.')
         except:
@@ -183,11 +184,11 @@ def main(args):
     if args.curve:
         try:
             logging.info('updating futures spread and fly --------')
-            construct_comdty_curve_fly()
+            construct_curve_spread_fly()
             logging.info('finished updating futures spread and fly --------')
         except:
             logging.error('futures spread and fly failed.')
-        time.sleep(3)
+        time.sleep(3)        
 
     # ------------- copy if valid -------------------------- #
     if args.backup:

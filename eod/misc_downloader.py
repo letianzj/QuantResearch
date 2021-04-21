@@ -122,14 +122,14 @@ def download_current_cot_from_cftc(misc_dict: Dict) -> None:
     cot_dict = {}
     cot_c_dict = {}
 
-    # futures_only
+    # Disaggregated, futures_only
     url_f = 'https://www.cftc.gov/dea/newcot/f_disagg.txt'
     r_f = requests.get(url_f, stream=True)
     if r_f.ok:
         data_f = r_f.content.decode('utf8')
-    # with open(r'C:\Users\Downloads\f_year.txt') as csv_file:
-        for row in csv.reader(data_f.split('\n'), delimiter=',', quotechar='"'):
-        # for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
+    with open(r'C:\Users\letian\Downloads\f_year.txt') as csv_file:
+        # for row in csv.reader(data_f.split('\n'), delimiter=',', quotechar='"'):
+        for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
             if row == []:
                 continue
 
@@ -165,14 +165,14 @@ def download_current_cot_from_cftc(misc_dict: Dict) -> None:
 
             logging.info(f'COT:{sym} futures is downloaded')
 
-    # futures and options
+    # Disaggregated, futures and options
     url_c = 'https://www.cftc.gov/dea/newcot/c_disagg.txt'
     r_c = requests.get(url_c, stream=True)
     if r_c.ok:
         data_c = r_c.content.decode('utf8')
-    # with open(r'C:\Users\Downloads\c_year.txt') as csv_file:           # csv
-        for row in csv.reader(data_c.split('\n'), delimiter=',', quotechar='"'):
-        # for row in csv.reader(csv_file, delimiter=',', quotechar='"'):       # csv
+    with open(r'C:\Users\letian\Downloads\c_year.txt') as csv_file:           # csv
+        # for row in csv.reader(data_c.split('\n'), delimiter=',', quotechar='"'):
+        for row in csv.reader(csv_file, delimiter=',', quotechar='"'):       # csv
             if row == []:
                 continue
 
@@ -217,14 +217,14 @@ def download_current_cot_from_cftc(misc_dict: Dict) -> None:
 
     cot_dict = {}
     cot_c_dict = {}
-    # futures_only
+    # financial, futures_only
     url_f = 'https://www.cftc.gov/dea/newcot/FinFutWk.txt'
     r_f = requests.get(url_f, stream=True)
     if r_f.ok:
         data_f = r_f.content.decode('utf8')
-    # with open(r'C:\Users\Downloads\FinFutYY.txt') as csv_file:
-        for row in csv.reader(data_f.split('\n'), delimiter=',', quotechar='"'):
-        # for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
+    with open(r'C:\Users\letian\Downloads\FinFutYY.txt') as csv_file:
+        # for row in csv.reader(data_f.split('\n'), delimiter=',', quotechar='"'):
+        for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
             if row == []:
                 continue
 
@@ -260,14 +260,14 @@ def download_current_cot_from_cftc(misc_dict: Dict) -> None:
 
             logging.info(f'COT:{sym} futures is downloaded')
 
-    # futures and options
+    # financial, futures and options
     url_c = 'https://www.cftc.gov/dea/newcot/FinComWk.txt'
     r_c = requests.get(url_c, stream=True)
     if r_c.ok:
         data_c = r_c.content.decode('utf8')
-    # with open(r'C:\Users\Downloads\FinComYY.txt') as csv_file:
-        for row in csv.reader(data_c.split('\n'), delimiter=',', quotechar='"'):
-        # for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
+    with open(r'C:\Users\letian\Downloads\FinComYY.txt') as csv_file:
+        # for row in csv.reader(data_c.split('\n'), delimiter=',', quotechar='"'):
+        for row in csv.reader(csv_file, delimiter=',', quotechar='"'):
             if row == []:
                 continue
 
