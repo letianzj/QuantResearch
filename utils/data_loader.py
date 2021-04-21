@@ -99,6 +99,28 @@ def load_inter_comdty_generic_hist_prices() -> Dict:
     return generic_inter_comdty_hist_prices_dict
 
 
+def load_spread_score() -> Dict:
+    spread_score_dict = dict()
+    if os.path.isfile(os.path.join(global_settings.root_path, 'data/spread_scores.h5')):
+        with h5py.File(os.path.join(global_settings.root_path, 'data/spread_scores.h5'), 'r') as f:
+            for k in f.keys():
+                spread_score_dict[k] = None
+    for k in spread_score_dict.keys():
+        spread_score_dict[k] = pd.read_hdf(os.path.join(global_settings.root_path, 'data/spread_scores.h5'), key=k)
+    return spread_score_dict
+
+
+def load_fly_score() -> Dict:
+    fly_score_dict = dict()
+    if os.path.isfile(os.path.join(global_settings.root_path, 'data/fly_scores.h5')):
+        with h5py.File(os.path.join(global_settings.root_path, 'data/fly_scores.h5'), 'r') as f:
+            for k in f.keys():
+                fly_score_dict[k] = None
+    for k in fly_score_dict.keys():
+        fly_score_dict[k] = pd.read_hdf(os.path.join(global_settings.root_path, 'data/fly_scores.h5'), key=k)
+    return fly_score_dict
+
+
 def load_misc() -> Dict:
     misc_dict = dict()
     if os.path.isfile(os.path.join(global_settings.root_path, 'data/misc.h5')):
