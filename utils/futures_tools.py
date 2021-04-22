@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime
+from typing import List
 import logging
 
 def get_futures_chain(meta_data: pd.DataFrame, asofdate: datetime.date) -> pd.DataFrame:
@@ -104,23 +105,25 @@ def get_generic_futures_hist_data(actual_futures_hist_data: pd.DataFrame, meta_d
     return generic_data_df
 
 
-def get_seasonal_contracts(futures_asofdate, contracts, weights, hist_data, meta_data):
+def get_seasonal_contracts(futures_asofdate: pd.Timestamp, contracts: List[str], weights: List[int], hist_data: pd.DataFrame, meta_data: pd.DataFrame) -> pd.DataFrame:
     """
     return seasonal series
     :param hist_data:
     :param meta_data:
-    :param contracts: outright, curve, fly, e.g.['CLH21', 'CLM21'] asof 12/1/2019
+    :param contracts: outright, curve, fly, e.g.['CLH2021', 'CLM2021'] asof 12/1/2019
     :param weights: matches contracts, e.g. [-1, 1]
     :return: dataframe
     """
-    # back year by year until first leg expires, e.g. on 2/20/2019 CLH19 expired
+    # go back year by year until first leg expires, e.g. on 2/20/2019 CLH2019 expired
     # then find the total business days to its expiry
     # (anchor_day, anchor_contract) pair is (asofdate, first leg contract) pair going back yrs_back
+    # e.g. (12/1/2018, CLH2020), (12/1/2017, CLH2019), ...., 
+    # the first one is not complete/ not yet expired as of 12/1/2019, while the second one is complete/expired.
     yrs_back = 0
     anchor_days = []
     anchor_contracts = []
     anchor_days.append(futures_asofdate)             # 12/1/2019
-    anchor_contracts.append(contracts[0])            # CLH21
+    anchor_contracts.append(contracts[0])            # CLH2021
     last_complete_yr = None
     while True:
         try:
@@ -133,8 +136,8 @@ def get_seasonal_contracts(futures_asofdate, contracts, weights, hist_data, meta
             anchor_day = hist_data.index[hist_data.index.searchsorted(anchor_day)]
             if anchor_day <= hist_data.index[0]:  # run out of hist data
                 break
-            anchor_days.append(anchor_day)                     # add 12/1/2018, 12/1/2017 (complete), ...
-            anchor_contracts.append(anchor_contract)           # add CLH20, CLH19 (complete), ...
+            anchor_days.append(anchor_day)                     # 12/1/2019, add 12/1/2018, 12/1/2017 (complete), ...
+            anchor_contracts.append(anchor_contract)           # CLH2021, add CLH2020, CLH2019 (complete), ...
 
             yrs_back -= 1
             if meta_data.loc[anchor_contracts[-1], 'Last_Trade_Date'] < futures_asofdate and last_complete_yr is None:
@@ -175,30 +178,30 @@ def get_seasonal_contracts(futures_asofdate, contracts, weights, hist_data, meta
             combo.name = c1
 
         j = abs(last_complete_yr)         # j=2
-        if i < j:         # when i=0, (12/1/2019, CLH21) is not complete, i=1, (12/1/2018, CLH20) is not complete
-            anchor_day_j = anchor_days[j - i]            # when i=0, days_to_go between (12/1/2019, CLH21)==(12/1/2017, CLH19), when i=1, days_to_go betwen (12/1/2019, CLH20)==(12/1/2018, CLH19)
+        if i < j:         # when i=0, (12/1/2019, CLH2021) is not complete or expired, i=1, (12/1/2018, CLH2020) is not complete or expired ==> need to append nan
+            anchor_day_j = anchor_days[j - i]            # when i=0, days_to_go between (12/1/2019, CLH21)==(12/1/2017, CLH19), when i=1, days_to_go betwen (12/1/2018, CLH20)==(12/1/2017, CLH19)
             anchor_contract_j = anchor_contracts[j]
             days_to_go = hist_data.index.searchsorted(meta_data.loc[anchor_contract_j, 'Last_Trade_Date']) \
-                         - hist_data.index.searchsorted(anchor_day_j)
+                         - hist_data.index.searchsorted(anchor_day_j)    # last_trade_date(CLH19) - 12/1/2017
             # append nan to days_to_go, asofdate should be day days_to_go, there are 0..(days_to_go-1) days with NaN to complete
             s_to_go = pd.Series(np.zeros(days_to_go) + np.nan)
             s_to_go.name = combo.name
             combo.index = range(combo.shape[0] - 1 + days_to_go, days_to_go - 1, -1)  # n-1, n-2, ..., 0
             combo = combo.append(s_to_go)
-            combo.sort_index(inplace=True)
+            combo.sort_index(inplace=True)        # index by days_to_go, or last day first, to facilitate slicing
         else:           # when i=2, (12/1/2017, CLH19) is complete
             last_day_1 = meta_data.loc[c1, 'Last_Trade_Date']
-            anchor_day_idx = hist_data.index.searchsorted(anchor_day)
-            contract_day_idx = hist_data.index.searchsorted(last_day_1)
+            # anchor_day_idx = hist_data.index.searchsorted(anchor_day)
+            # contract_day_idx = hist_data.index.searchsorted(last_day_1)
             combo = combo.loc[:last_day_1]
             if (i == j):
-                final_index = combo.index
+                final_index = combo.index          # the index for all seasonal series
             combo.index = range(combo.shape[0] - 1, -1, -1)  # n-1, n-2, ..., 0
 
         s = pd.concat([s, combo], axis=1)
 
-    s = s.loc[:len(final_index) - 1, ]
-    s.index = final_index.sort_values(ascending=False)
+    s = s[:len(final_index)]      # cut off s in order to attach final_index
+    s.index = final_index.sort_values(ascending=False)   # reverse final_index and attach
     s.sort_index(inplace=True)
 
     return s

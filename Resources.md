@@ -18,6 +18,8 @@
 
 * [Jonathan Kinlay](http://jonathankinlay.com/)
 
+* [NN2 Capital](http://blog.harbourfronts.com/)
+
 * [Python for Finance](https://www.pythonforfinance.net/)
 
 * [Quantconnect](https://www.quantconnect.com/tutorials/strategy-library/strategy-library) -- Strategy library

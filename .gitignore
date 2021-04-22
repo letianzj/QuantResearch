@@ -147,3 +147,6 @@ eod/.vscode
 data/bak/
 data/config/
 data/tick/
+
+.vscode/
+.dash/vscode/
