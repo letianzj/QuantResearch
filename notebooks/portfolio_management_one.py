@@ -130,13 +130,11 @@ r_f = 0.01
 w_sharpe = np.dot(hist_cov_inv, hist_mean.as_matrix()-r_f/250) / np.dot(one_vec, np.dot(hist_cov_inv, hist_mean.as_matrix()-r_f/250))
 w_sharpe_df = pd.DataFrame(w_sharpe).T
 w_sharpe_df.columns = assets
-mu_sharpe = np.dot(w_sharpe.T, hist_mean.as_matrix()) * 250
-stdev_sharpe = np.sqrt(np.dot(w_sharpe.T, np.dot(hist_cov, w_sharpe))) * np.sqrt(250)
-sharpe_ratio = (mu_sharpe-r_f)/stdev_sharpe
 print(w_sharpe_df)
-print(mu_sharpe)
-print(stdev_sharpe)
-print(sharpe_ratio)
+print(mu_sharpe := np.dot(w_sharpe.T, hist_mean.as_matrix()) * 250)
+print(stdev_sharpe := np.sqrt(np.dot(w_sharpe.T, np.dot(hist_cov, w_sharpe))) * np.sqrt(250))
+print(sharpe_ratio := (mu_sharpe-r_f)/stdev_sharpe)
+
 
 from scipy.optimize import minimize
 
@@ -146,10 +144,7 @@ res = minimize(fun, w_gmv, method='SLSQP', constraints=cons)
 w_sharpe_v2 = res['x']
 w_sharpe_v2_df = pd.DataFrame(w_sharpe_v2).T
 w_sharpe_v2_df.columns = assets
-mu_sharpe_v2 = np.dot(w_sharpe_v2.T, hist_mean.as_matrix()) * 250
-stdev_sharpe_v2 = np.sqrt(np.dot(w_sharpe_v2.T, np.dot(hist_cov, w_sharpe_v2))) * np.sqrt(250)
-sharpe_ratio_v2 = (mu_sharpe-r_f)/stdev_sharpe
 print(w_sharpe_v2_df)
-print(mu_sharpe_v2)
-print(stdev_sharpe_v2)
-print(sharpe_ratio_v2)
+print(mu_sharpe_v2 := np.dot(w_sharpe_v2.T, hist_mean.as_matrix()) * 250)
+print(stdev_sharpe_v2 := np.sqrt(np.dot(w_sharpe_v2.T, np.dot(hist_cov, w_sharpe_v2))) * np.sqrt(250))
+print(sharpe_ratio_v2 := (mu_sharpe-r_f)/stdev_sharpe)
