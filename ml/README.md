@@ -10,6 +10,7 @@
 |7 |  [PPO](./ppo.ipynb)    |
 |6 |  [Arctor-Critic A3C](./a3c.ipynb)    |
 |7 |  [Option Pricing](./american_option.ipynb)    |
+|8 |  [Atari Space-Invaders](./atari_space_invaders.ipynb)    |
 
 ```python
 
