@@ -103,7 +103,7 @@ if __name__ == '__main__':
     init_capital = 100_000.0
     df_future = data_loader.load_futures_hist_prices(symbol)
     df_future.index = df_future.index.tz_localize('US/Eastern')
-    test_start_date = datetime(2021, 1, 1, 0, 0, 0, 0, pytz.timezone('US/Eastern'))
+    test_start_date = datetime(2019, 1, 1, 0, 0, 0, 0, pytz.timezone('US/Eastern'))
     test_end_date = datetime(2021, 12, 30, 0, 0, 0, 0, pytz.timezone('US/Eastern'))
     
     init_capital = 50.0

@@ -1,7 +1,6 @@
 # QuantResearch
 
 * [Backtest](./backtest)
-* [Data Downloader for Backtest](./backtest/hist_downloader.py)
 * [Machine Learning and Deep Reinforcement Learning](./ml) 
 * [Online Resources](./Resources.md)
 * [Live Trading Demo Video](https://youtu.be/CrsrTxqiXNY)

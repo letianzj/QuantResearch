@@ -22,6 +22,7 @@ Test against daily bars between 2010 and 2019. It may not be fair to some intrad
 |9 |  [Turtle](./turtle.py)    |0.15 |
 |10 |  [Mebane Faber TAA](./mebane_faber_taa.py)    | 0.50|
 |11 |  [MinVar, MaxSharpe, MaxDiversified, RiskParity](./portfolio_optimization.py)    | 1.08, 0.66, 0.90, 0.81|
+|12 |  [Comdty Roll](./comdty_roll.py)    | pre-roll 0.55 vs last day -0.50 due to -$37.63 oil price|
 
 ```python
 
