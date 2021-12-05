@@ -10,6 +10,8 @@
 
 * [Barclays QIS Insights](https://indices.barclays/IM/21/en/indices/static/our-insights.app) --
 
+* [BTCM](https://btcm.co/tag/blog/) --
+
 * [CSSA](https://cssanalytics.wordpress.com/)
 
 * [Ernie Chan](https://epchan.blogspot.com/)
@@ -38,13 +40,17 @@
 
 * [Robot Wealth](https://robotwealth.com/blog/)
 
-* [Systematic Edge](https://systematicedge.wordpress.com/)
-
 * [SIT](https://systematicinvestor.wordpress.com/) -- Good contents
+
+* [Six Figure Investing](https://sixfigureinvesting.com/)
+
+* [Systematic Edge](https://systematicedge.wordpress.com/)
 
 * [Tyler's Trading](http://tylerstrading.blogspot.com/)
 
 * [VIX and More](http://vixandmore.blogspot.com/) -- Vol strategies
+
+* [Volatility Made Simple](http://volatilitymadesimple.com/)
 
 ## Forums
 

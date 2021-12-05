@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List
 import logging
 
+
 def get_futures_chain(meta_data: pd.DataFrame, asofdate: datetime.date) -> pd.DataFrame:
     """
     get current futures chain on asofdate
@@ -203,6 +204,7 @@ def get_seasonal_contracts(futures_asofdate: pd.Timestamp, contracts: List[str],
     s = s[:len(final_index)]      # cut off s in order to attach final_index
     s.index = final_index.sort_values(ascending=False)   # reverse final_index and attach
     s.sort_index(inplace=True)
+    s.index = s.index + pd.offsets.DateOffset(years=1)   # add one year to today
 
     return s
 

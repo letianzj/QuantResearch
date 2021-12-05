@@ -22,7 +22,6 @@ def download_generic_futures_hist_prices_from_quandl() -> None:
 
 def download_futures_hist_prices_from_quandl() -> None:
     """
-    TODO: should use ZC, ZS, ZW
     :return:
     """
     # start_date = datetime(2017, 1, 1)
@@ -32,6 +31,7 @@ def download_futures_hist_prices_from_quandl() -> None:
     df_futures_meta = pd.read_csv(os.path.join(global_settings.root_path, 'data/config/futures_meta.csv'), index_col=0)
     df_futures_meta = df_futures_meta[~np.isnan(df_futures_meta['QuandlMultiplier'])]
     df_futures_contracts_meta = pd.read_csv(os.path.join(global_settings.root_path, 'data/config/futures_contract_meta.csv'), index_col=0, keep_default_na=False)
+    df_futures_contracts_meta = df_futures_contracts_meta[~df_futures_contracts_meta['Last_Trade_Date'].isnull()]       # remove empty last_trade_date; same as keep_default_na=False
     df_futures_contracts_meta['Last_Trade_Date'] = pd.to_datetime(df_futures_contracts_meta['Last_Trade_Date'])
 
     futures_hist_prices_dict = dict()
