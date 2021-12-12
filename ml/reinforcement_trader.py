@@ -28,15 +28,18 @@ df['Low'] = df['Adj Close'] / df['Close'] * df['Low']
 df['Volume'] = df['Adj Close'] / df['Close'] * df['Volume']
 df['Close'] = df['Adj Close']
 df = df[['Open', 'High', 'Low', 'Close', 'Volume']]
+price_history = df.copy()
+price_history['date'] = df.index
 ta.add_all_ta_features(df, 'Open', 'High', 'Low', 'Close', 'Volume', fillna=True)
-df.columns = [symbol + ":" + name.lower() for name in df.columns]
+df.columns = [c.lower() for c in df.columns]
+price_history.columns = [c.lower() for c in price_history.columns]
 
 #-------------------- Environment --------------------------#
 # 1. exchange
 exchange_name = "backtest-exchange"
 exchange_options = ExchangeOptions(commission = 0.003, min_trade_size=1e-6)
 exchange = Exchange(exchange_name, service=execute_order, options=exchange_options)(
-    Stream.source(df[f'{symbol}:close'].tolist(), dtype="float").rename(f"USD-{symbol}")
+    Stream.source(df['close'].tolist(), dtype="float").rename(f"USD-{symbol}")
 )
 
 # 2. data feed
@@ -44,6 +47,9 @@ with NameSpace(exchange_name):
     streams = [Stream.source(df[c].tolist(), dtype="float").rename(c) for c in df.columns]
 feed = DataFeed(streams)
 feed.next()
+
+rstreams = [Stream.source(price_history[c].tolist()).rename(c) for c in price_history.columns]
+rfeed = DataFeed(rstreams)
 
 # 3. Portfolio
 SPY = Instrument(symbol, 1, symbol)
@@ -54,13 +60,20 @@ portfolio = Portfolio(USD, [
 
 # 4. TradingEnv
 # TODO net_worth in external data source
+chart_renderer = default.renderers.PlotlyTradingChart()
+screen_logger = default.renderers.ScreenLogger(date_format="%Y-%m-%d %H:%M:%S %p")
+
 env = default.create(
     portfolio=portfolio,
     action_scheme=default.actions.SimpleOrders(trade_sizes=[1.0], min_order_pct=0),       # 100% buy or sell
     reward_scheme=default.rewards.SimpleProfit(window_size=1),
     feed=feed,
-    renderer=default.renderers.ScreenLogger(date_format="%Y-%m-%d %H:%M:%S %p"),
-    window_size=22
+    renderer_feed=rfeed,
+    window_size=22,
+        renderer=[
+      chart_renderer,
+      screen_logger,
+    ]
 )
 
 #-------------------- Training --------------------------#
@@ -72,6 +85,7 @@ while not done:
     obs, reward, done, info = env.step(action)
 #print(portfolio.ledger.as_frame().head(20))
 #portfolio.ledger.as_frame().to_clipboard(index=False)
+#env.render()
 
 # 2. DQN agent
 obs = env.reset()
