@@ -1,14 +1,42 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Gym trading env
+Unlike live engine or backtest engine, where event loops are driven by live ticks or historical ticks,
+here it is driven by step function, similar to
 https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py
-1. obs <- reset()      # env
-2. action <- pi(obs)    # agent
-3. news_obs <- step(action)      # env
-repeat 2, and 3 for interactions between agent and env
+The sequence is
+1. obs <- env.reset()      # env; obs = OHLCV + technical indicators + holdings
+2. action <- pi(obs)       # agent; action = target weights
+3. news_obs, reward, <- step(action)      # env
+    3.a action to orders   # sum(holdings) * new weights
+    3.b fill orders        # portfolio rotates into new holdings
+repeat 2, and 3 to interact between agent and env
 """
 import numpy as np
 import pandas as pd
 import gym
+
+
+class PortfolioWeightsBox(gym.spaces.Box):
+    """
+    gym Box with constraints on weights across cash+n_assets
+    w >= 0, sum(w) = 1, no short sell allowed
+    """
+    def __init__(self, low, high, shape : np.int32=1, dtype=np.float32, seed=None) -> None:
+        assert shape >= 1
+        self.n_assets = shape+1     # add cash
+        super().__init__(low, high, (self.n_assets,), dtype, seed)
+    
+    def sample(self) -> np.array:
+        return np.random.dirichlet(alpha=self.n_assets * [1])
+    
+    def contains(self, x) -> bool:
+        if len(x) != self.n_assets:
+            return False
+        if not np.testing.assert_allclose(sum(x), 1.0):
+            return False
+        return True
 
 
 class TradingEnv(gym.Env):
@@ -21,12 +49,12 @@ class TradingEnv(gym.Env):
         self._max_volume_scaler = 1.0
         self._max_position_scaler = 1.0
         self._look_back = 10      # two weeks
-        self._commission_rate = 0.0001  # 1bps
+        self._commission_rate = 0.0001  # commission plus slippage
         self._df_scaled = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volumne'])
         self._current_step = 0
 
         # action_space = 0 ~ 100%; buy or sell up to TARGET percentage of nav
-        self.action_space = gym.spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32)
+        self.action_space = PortfolioWeightsBox(low=0.0, high=1.0, shape=1, dtype=np.float32)
         # first row is scaled open price, then high, low, close, volume; last row is nav, position, and padded by 0
         self.observation_space = gym.spaces.Box(low=0, high=1, shape=(6, self._look_back), dtype=np.float16)
 
@@ -78,7 +106,18 @@ class TradingEnv(gym.Env):
         """
         move one step to the next timestamp, accordingly to action
         assume hft condition: execution at today 15:59:59, after observing today's ohl and (almost) close.
-        execution immediately using market or market on close, no slippage
+        execution immediately using market or market on close, no slippage.
+        e.g., assume on 12/31/2019, 1/2/2020, and 1/3/2020 prices are $95, $100, $110. respectively. 
+        The state or observation is prices of last two days. 
+        We start on 1/2/2020 with $100,000.
+        Then
+        1. on 1/2/2020, obs = [$95, $100]         # obs <- env.reset()
+        2. on 1/2/2020, based on the up-trend observation, we decide to buy. 
+            Our allocation action w is [50%, 50%], or half in cash, half in stock.
+        3. on 1/2/2020, the step function is      # news_obs, reward <- step(action)
+            3.a buy order of $5,000 or 50 shares, filled at $100
+            3.b stock market environment transits to 1/3/2020, new observation is [$100, $110];
+                our stock is now worth $5,500, and total asset NAV is $10,500, or reward $500.
         :param action:
         :return:
         """
@@ -91,7 +130,7 @@ class TradingEnv(gym.Env):
 
         # rebalance
         current_nav = current_cash + current_price * current_size
-        new_size = int(np.floor(current_nav * action / current_price))
+        new_size = int(np.floor(current_nav * action[1] / current_price))       # odd size allowed
         delta_size = new_size - current_size
         current_commission = np.abs(delta_size) * current_price * self._commission_rate
         new_cash = current_cash - delta_size * current_price - current_commission
@@ -121,6 +160,9 @@ class TradingEnv(gym.Env):
         return new_state, reward, done, info
 
     def reset(self):
+        """
+        random start time
+        """
         self._cash = self._inital_cash / self._max_nav_scaler
         self._position = 0 / self._max_position_scaler
         self._current_step = np.random.randint(low=self._look_back-1, high=self._df_scaled.shape[0])    # low (inclusive) to high (exclusive)
@@ -129,6 +171,12 @@ class TradingEnv(gym.Env):
         return self._get_observation()
 
     def render(self, mode='human'):
+        pass
+
+    def play(self):
+        """
+        Matplotlib animation
+        """
         pass
 
     def close(self):
@@ -142,10 +190,10 @@ if __name__ == '__main__':
     df.index = pd.to_datetime(df.index)
     look_back = 10
     cash = 100_000.0
-    max_price_scaler = 5_000.0
+    max_price_scaler = 1.0      #5_000.0
     max_volume_scaler = 1.5e10
-    max_nav_scaler = 5.0 * cash
-    max_position_scaler = max_nav_scaler / 1_000.0
+    max_nav_scaler = 1.0        #5.0 * cash
+    max_position_scaler = 1.0   # max_nav_scaler / 1_000.0
 
     trading_env.set_cash(cash)
     trading_env.set_commission(0.0001)
@@ -155,8 +203,7 @@ if __name__ == '__main__':
     df_results = df['Close']
     # trading_env._current_step = look_back-1        # ignore randomness
     while True:
-        # action = 1.0             # buy and hold
-        action = np.random.rand(1)[0]        # random strat; uniform [0, 1]
+        action = trading_env.action_space.sample()
         o2, reward, done, info = trading_env.step(action)
         print(action, reward * max_nav_scaler, info)
         if done:
