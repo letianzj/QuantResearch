@@ -1,9 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""
+Gym trading env
+Unlike live engine or backtest engine, where event loops are driven by live ticks or historical ticks,
+here it is driven by step function, similar to
+https://github.com/openai/gym/blob/master/gym/envs/classic_control/cartpole.py
+The sequence is
+1. obs <- env.reset()      # env; obs = OHLCV + technical indicators + holdings
+2. action <- pi(obs)       # agent; action = target weights
+3. news_obs, reward, <- step(action)      # env
+    3.a action to orders   # sum(holdings) * new weights
+    3.b fill orders        # portfolio rotates into new holdings
+repeat 2, and 3 to interact between agent and env
+"""
 import numpy as np
 import pandas as pd
-from quanttrader import TradingEnv
+from quanttrader import PortfolioEnv
 
 
 def load_data():
@@ -12,7 +24,7 @@ def load_data():
 
     sd = '2015'
     ed = '2020'
-    syms = ['SPY']
+    syms = ['SPY', 'AAPL']
     max_price_scaler = 5_000.0
     max_volume_scaler = 1.5e10
     df_obs = pd.DataFrame()             # observation
@@ -61,7 +73,7 @@ if __name__ == '__main__':
 
     df_obs, df_exch = load_data()
 
-    trading_env = TradingEnv(2, df_obs, df_exch)
+    trading_env = PortfolioEnv(df_obs, df_exch)
     trading_env.set_cash(cash)
     trading_env.set_commission(0.0001)
     trading_env.set_steps(n_lookback=10, n_warmup=50, n_maxsteps=250)
