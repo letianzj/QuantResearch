@@ -34,7 +34,8 @@
 |23 |  [Irregular Interval EMA](https://github.com/letianzj/quanttrader/blob/master/examples/strategy/moving_average_cross_strategy.py)    |[link](https://letianzj.github.io/exponential-moving-average.html)|
 |24 |  [Free Historical Market Data Download](./backtest/hist_downloader.py)    |[link](https://medium.com/@letian.zj/free-historical-market-data-download-in-python-74e8edd462cf?source=friends_link&sk=5af814910524a593353ed3146290d50e)|
 |25 |  [Market Profile and Volume Profile](./market/market_profile.ipynb)    |[link](https://medium.com/@letian.zj/market-profile-and-volume-profile-in-python-139cb636ece?source=friends_link&sk=fd883f5fefab725f14d6ddbb3d271fa7)|
-|26 |  [From Reinforcement Gamer to Reinforcement Trader](./ml/reinforcement_trader.ipynb)    | wip |
+|26 |  [From Reinforcement Gamer to Reinforcement Trader](https://letian-wang.medium.com/from-reinforcement-gamer-to-reinforcement-trader-8b0a7ef8b53f?source=friends_link&sk=c540c7a48421c7d4de9c934a7d1a7842)    | [link](./ml/reinforcement_trader.ipynb) |
+|27 |  [Reinforcement Portfolio Manager](./ml/reinforcement_pm.ipynb)    | wip |
 
 ```python
 
