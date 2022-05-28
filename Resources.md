@@ -1,6 +1,7 @@
 * [Websites](#websites)
 * [Forums](#forums)
 * [Projects](#projects)
+* [Articles](#articles)
 
 - - -
 
@@ -91,3 +92,16 @@
 
 * [awesome-ai-in-finance](https://github.com/georgezouq/awesome-ai-in-finance) - Machine learning strategies and useful tools use in financial market
 
+## Articles
+
+* [statsmodels](https://www.statsmodels.org/stable/index.html)
+
+* [sklearn](https://scikit-learn.org/stable/index.html)
+
+* [Python Data Science](https://jakevdp.github.io/PythonDataScienceHandbook/)
+
+* [Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow](https://www.amazon.com/Hands-Machine-Learning-Scikit-Learn-TensorFlow/dp/1492032646)
+
+* [sklearn](https://www.analyticsvidhya.com/blog/2020/01/build-your-first-machine-learning-pipeline-using-scikit-learn/)
+
+* [Journal of Trading](https://jot.pm-research.com/)
