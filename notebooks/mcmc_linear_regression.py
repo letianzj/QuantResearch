@@ -16,7 +16,7 @@ import scipy.stats
 # don't forget to generate the 500 random samples as in the previous post
 sigma_e = 3.0
 
-# Similar to last post, let's initially believe that a, b follow Normal distribution with mean 0.5 and stadndard deviation 0.5
+# Similar to last post, let's initially believe that a, b follow Normal distribution with mean 0.5 and standard deviation 0.5
 # it returns the probability of seeing beta under this belief
 def prior_probability(beta):
     a = beta[0]     # intercept

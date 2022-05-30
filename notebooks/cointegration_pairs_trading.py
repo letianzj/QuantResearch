@@ -25,7 +25,7 @@ from sklearn.linear_model import LinearRegression
 # The next two lines does the regression
 lm_model = LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
 lm_model.fit(data['EWA US Equity'].values.reshape(-1,1), data['EWC US Equity'].values)        # fit() expects 2D array
-print('pamameters: %.7f, %.7f' %(lm_model.intercept_, lm_model.coef_))
+print('parameters: %.7f, %.7f' %(lm_model.intercept_, lm_model.coef_))
 
 # present the graph
 fig, ax = plt.subplots(nrows=1, ncols=2)
@@ -53,7 +53,7 @@ ts.adfuller(y_residual, 1)           # lag = 1
 
 lm_model = LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
 lm_model.fit(data['EWC US Equity'].values.reshape(-1,1), data['EWA US Equity'].values)        # fit() expects 2D array
-print('pamameters: %.7f, %.7f' %(lm_model.intercept_, lm_model.coef_))
+print('parameters: %.7f, %.7f' %(lm_model.intercept_, lm_model.coef_))
 yfit = lm_model.coef_ * data['EWC US Equity'] + lm_model.intercept_
 y_residual = data['EWA US Equity'] - yfit
 ts.adfuller(y_residual, 1)           # lag = 1

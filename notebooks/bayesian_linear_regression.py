@@ -40,7 +40,7 @@ for pair in range(250):       # 500 points means 250 pairs
     sigma_beta_0 = sigma_beta_1
     beta_recorder.append(beta_0)
 
-print('pamameters: %.7f, %.7f' %(beta_0[0], beta_0[1]))
+print('parameters: %.7f, %.7f' %(beta_0[0], beta_0[1]))
 
 # plot the Beyesian dynamics
 xfit = np.linspace(0, 10, sample_size)

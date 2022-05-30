@@ -34,7 +34,7 @@ def generate_html(today):
     df_stock['Last5Year'] = data.iloc[-1] - data.iloc[-52*5:].mean()
 
     # model driven estimate rather than a survey
-    # while stock change is from survey, the differnce is adjustment.
+    # while stock change is from survey, the difference is adjustment.
     # Domestic Production + Net Imports - To Refineries + Adjustment = Stock Change
     data2 = pd.read_excel('http://ir.eia.gov/wpsr/psw01.xls', 'Data 2', header=1, skiprows=range(2, 3))
     data2.rename(columns={'Sourcekey': 'Date'}, inplace=True)
@@ -58,9 +58,9 @@ def generate_html(today):
     data3.rename(columns={'Sourcekey': 'Date'}, inplace=True)
     data3.set_index('Date', inplace=True)
     data3 = data3[['WCRRIUS2', 'WPULEUS3', 'W_EPM0F_YPR_NUS_MBBLD', 'WDIRPUS2']]
-    data3.columns = ['Crude Input to Refineries', 'Refinery Capacity Utilization', 'Gasoline Produciton', 'Distillate Production']
+    data3.columns = ['Crude Input to Refineries', 'Refinery Capacity Utilization', 'Gasoline Production', 'Distillate Production']
     data3['Crude Input to Refineries'] = data3['Crude Input to Refineries'] / 1000.0
-    data3['Gasoline Produciton'] = data3['Gasoline Produciton'] / 1000.0
+    data3['Gasoline Production'] = data3['Gasoline Production'] / 1000.0
     data3['Distillate Production'] = data3['Distillate Production'] / 1000.0
     df_production = pd.DataFrame(index=data3.columns)
     df_production['Stock'] = data3.iloc[-1]

@@ -106,7 +106,7 @@ ef_left = np.asscalar(min(hist_mean.as_matrix()))          # minimum return
 ef_right = np.asscalar(max(hist_mean.as_matrix()))         # maximum return
 target_returns = np.linspace(ef_left, ef_right, N)         # N target returns
 optimal_weights = [ solvers.qp(P, q, A=A, b=matrix([t,1]))['x'] for t in target_returns ]    # QP solver
-ef_returns = [ np.asscalar(np.dot(w.T, hist_mean.as_matrix())*250) for w in optimal_weights ]         #a nnualized
+ef_returns = [ np.asscalar(np.dot(w.T, hist_mean.as_matrix())*250) for w in optimal_weights ]         # annualized
 ef_risks = [ np.asscalar(np.sqrt(np.dot(w.T, np.dot(hist_cov, w)) * 250)) for w in optimal_weights ]
 
 plt.plot(port_stdevs, port_returns, 'o', markersize=6, label='Candidate Market Portfolio')

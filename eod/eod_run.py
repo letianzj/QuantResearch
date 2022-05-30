@@ -8,7 +8,7 @@
     -- USDT from treasury gov to misc
     -- Option Stats from CBOE to misc
     -- VIX Index from CBOE to stocks
-    -- VIX futurs from CBOE to futures
+    -- VIX futures from CBOE to futures
 ##################################################
 ## {License_info}
 ##################################################
@@ -17,7 +17,7 @@
 ## Credits: [{credit_list}]
 ## License: {license}
 ## Version: {mayor}.{minor}.{rel}
-## Mmaintainer: {maintainer}
+## Maintainer: {maintainer}
 ## Email: {contact_email}
 ## Status: {dev_status}
 ##################################################
@@ -170,7 +170,7 @@ def main(args):
             construct_inter_commodity_spreads()
             logging.info('-------- inter-commodity spread updated --------')
         except:
-            logging.error('-------- inter-commdity spread failed --------')
+            logging.error('-------- inter-commodity spread failed --------')
         time.sleep(3)
 
         try:
@@ -178,7 +178,7 @@ def main(args):
             construct_inter_comdty_generic_hist_prices()
             logging.info('inter-commodity generic spread updated.')
         except:
-            logging.error('inter-commoidty generic spread failed.')
+            logging.error('inter-commodity generic spread failed.')
         time.sleep(3)
 
     if args.curve:
