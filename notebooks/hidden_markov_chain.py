@@ -9,7 +9,7 @@ from matplotlib.dates import YearLocator, MonthLocator
 from datetime import datetime, date
 from hmmlearn.hmm import GaussianHMM
 
-#################################################### Viberti #####################################################
+#################################################### Viterbi #####################################################
 # https://en.wikipedia.org/wiki/Viterbi_algorithm
 obs = ('happy', 'happy', 'happy')
 states = ('Up', 'Down')

@@ -207,7 +207,7 @@ def run(args):
             pickle.dump(dict_all_stocks, f, pickle.HIGHEST_PROTOCOL)
         print(f'Fundamentals {field} downloaded')
 
-    # This is adatped from https://towardsdatascience.com/sentiment-analysis-of-stocks-from-financial-news-using-python-82ebdcefb638
+    # This is adapted from https://towardsdatascience.com/sentiment-analysis-of-stocks-from-financial-news-using-python-82ebdcefb638
     if args.sentiment:
         print('sentiment downloading .............')
         finwiz_url = 'https://finviz.com/quote.ashx?t='
@@ -246,7 +246,7 @@ def run(args):
                     # read the text from each tr tag into text
                     # get text from a only
                     text = x.a.get_text()
-                    # splite text in the td tag into a list
+                    # split text in the td tag into a list
                     date_scrape = x.td.text.split()
                     # if the length of 'date_scrape' is 1, load 'time' as the only element
                     if len(date_scrape) == 1:

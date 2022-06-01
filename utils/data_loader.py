@@ -11,7 +11,7 @@ import global_settings
 
 def load_stocks_hist_prices():
     """
-    read stocks historcial prices from h5
+    read stocks historical prices from h5
     :return:
     """
     stocks_hist_prices_dict = dict()

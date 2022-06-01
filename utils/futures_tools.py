@@ -35,7 +35,7 @@ def get_futures_generic_ticker(futures_chain: pd.DataFrame, futures: str) -> str
 def get_futures_actual_ticker(futures_chain: pd.DataFrame, generic_ticker: str) -> str:
     """
     get the actual ticker, e.g., NG1 ==> NGZ19
-    :param futurs_chain: futurs_chain on asofdate
+    :param futures_chain: futures_chain on asofdate
     :param generic_ticker: generic ticker
     :return: actual ticker
     """
@@ -60,7 +60,7 @@ def get_generic_futures_hist_data(actual_futures_hist_data: pd.DataFrame, meta_d
 
     construct generic futures hist data from actual futures hist data
     It assume roll on last trading day, to stitch together PRICE series
-    iterativelly between roll_idx_previous and roll_idx
+    iteratively between roll_idx_previous and roll_idx
     :param actual_futures_hist_data: dataframe, index is date, column is futures
     :param meta_data: dataframe: actual futures ==> last_trading_day
     :return: dataframe: index is date, column is generic futures

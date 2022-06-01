@@ -42,7 +42,7 @@ observation_cov = 0.001
 obs_mat_F = np.transpose(np.vstack([data[sym_a].values, np.ones(data.shape[0])])).reshape(-1, 1, 2)
 
 kf = KalmanFilter(n_dim_obs=1,                                      # y is 1-dimensional
-                  n_dim_state=2,                                    #  states (alpha, beta) is 2-dimensinal
+                  n_dim_state=2,                                    #  states (alpha, beta) is 2-dimensional
                   initial_state_mean=np.ones(2),                    #  initial value of intercept and slope theta0|0
                   initial_state_covariance=np.ones((2, 2)),         # initial cov matrix between intercept and slope P0|0
                   transition_matrices=np.eye(2),                    # G, constant

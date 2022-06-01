@@ -15,7 +15,7 @@ import empyrical as ep
 To use pyfolio 0.9.2
 1. line 893 in pyfolio/timeseries.py from: valley = np.argmin(underwater)  # end of the period to valley = underwater.idxmin()   # end of the period
 2. line 133 and 137 in pyfolio/round_trips.py: groupby uses list not tuple. ['block_dir', 'block_time']
-3. line 77 in pyfolio/roud_trips.py: doesn't support agg(stats_dict) and rename_axis ==> rename
+3. line 77 in pyfolio/round_trips.py: doesn't support agg(stats_dict) and rename_axis ==> rename
         ss = round_trips.assign(ones=1).groupby('ones')[col].agg(list(stats_dict.values()))
         ss.columns = list(stats_dict.keys())
         stats_all = (ss.T.rename({1.0: 'All trades'}, axis='columns'))

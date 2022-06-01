@@ -16,13 +16,13 @@ plt.scatter(x, y, color='blue')
 # normal equation to estimate the model parameters
 X = np.vstack((np.ones(sample_size), x)).T
 params_closed_form = np.linalg.inv(X.T.dot(X)).dot(X.T).dot(y)
-print('pamameters: %.7f, %.7f' %(params_closed_form[0], params_closed_form[1]))
+print('parameters: %.7f, %.7f' %(params_closed_form[0], params_closed_form[1]))
 
 from sklearn.linear_model import LinearRegression
 # The next two lines does the regression
 lm_model = LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
 lm_model.fit(x.reshape(-1,1), y)        # fit() expects 2D array
-print('pamameters: %.7f, %.7f' %(lm_model.intercept_, lm_model.coef_))
+print('parameters: %.7f, %.7f' %(lm_model.intercept_, lm_model.coef_))
 
 # present the graph
 xfit = np.linspace(0, 10, sample_size)
