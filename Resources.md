@@ -92,6 +92,7 @@
 
 * [awesome-ai-in-finance](https://github.com/georgezouq/awesome-ai-in-finance) - Machine learning strategies and useful tools use in financial market
 
+
 ## Articles
 
 * [statsmodels](https://www.statsmodels.org/stable/index.html)

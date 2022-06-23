@@ -7,7 +7,6 @@
 | [The Quants: How a New Breed of Math Whizzes Conquered Wall Street and Nearly Destroyed It](https://www.amazon.com/Quants-Whizzes-Conquered-Street-Destroyed/dp/0307453383) | 2011 | Scott Patterson | 
 | [Algorithmic Trading: Winning Strategies and Their Rationale](https://www.amazon.com/Algorithmic-Trading-Winning-Strategies-Rationale/dp/1118460146) | 2013 | Ernest P. Chan | 
 | [High-Frequency Trading: A Practical Guide to Algorithmic Strategies and Trading Systems](https://www.amazon.com/High-Frequency-Trading-Practical-Algorithmic-Strategies/dp/1118343506) | 2013 2nd | Irene Aldridge | 
-| [Inside the Black Box: A Simple Guide to Quantitative and High Frequency Trading](https://www.amazon.com/Inside-Black-Box-Quantitative-Frequency-ebook/dp/B00BZ9WAVW) | 2013 2nd | Rishi K. Narang | 
 | [Volatility Trading](https://www.amazon.com/Volatility-Trading-Website-Sinclair-Hardcover/dp/B010CL1SPW) | 2013 2nd | Euan Sinclair| 
 | [Systematic Trading: A unique new method for designing trading and investing systems](https://www.amazon.com/Systematic-Trading-designing-trading-investing/dp/0857194453) | 2015 | Robert Carver | 
 | [My Life as a Quant: Reflections on Physics and Finance](https://www.amazon.com/My-Life-Quant-Reflections-Physics/dp/0470192739) | 2016 | Emanuel Derman | 
